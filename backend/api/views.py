@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from rest_framework import viewsets
+from rest_framework import viewsets, permissions
 from .models import Competition, UserProfile, Registration, Team
 from .serializers import CompetitionSerializer, UserProfileSerializer, RegistrationSerializer, TeamSerializer, UserSerializer
 from django.contrib.auth.models import User
@@ -33,7 +33,7 @@ class CompetitionViewSet(viewsets.ModelViewSet):
     queryset = Competition.objects.all()
     serializer_class = CompetitionSerializer
     permission_classes = [IsAdminOrReadOnly]
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['type', 'status']
     search_fields = ['name', 'description'] 
     ordering_fields = ['deadline', 'created_at']
@@ -48,13 +48,20 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 class RegistrationViewSet(viewsets.ModelViewSet):
     queryset = Registration.objects.all()
     serializer_class = RegistrationSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['competition', 'user']
+    ordering_fields = ['registered_at']
 
 # ViewSet untuk Team
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated] 
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['competition']
+    search_fields = ['name']
+    ordering_fields = ['created_at']
 
 class RegisterCompetitionView(APIView):
     permission_classes = [IsAuthenticated]

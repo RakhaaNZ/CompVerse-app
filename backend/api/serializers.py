@@ -45,6 +45,7 @@ class RegistrationSerializer(serializers.ModelSerializer):
 
 # Serializer untuk Team
 class TeamSerializer(serializers.ModelSerializer):
+    members = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
     class Meta:
         model = Team
         fields = '__all__'

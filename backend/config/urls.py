@@ -30,8 +30,8 @@ from rest_framework_simplejwt.views import (
 router = DefaultRouter()
 router.register(r'competitions', CompetitionViewSet)
 router.register(r'users', UserProfileViewSet)
-router.register(r'registrations', RegistrationViewSet)
-router.register(r'teams', TeamViewSet)
+router.register(r'registrations', RegistrationViewSet, basename='registration')
+router.register(r'teams', TeamViewSet, basename='team')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
