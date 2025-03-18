@@ -10,7 +10,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from .permissions import IsAdminOrReadOnly
 from rest_framework.views import APIView
-from .models import Competition, Registration
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 class RegisterUserView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -32,6 +33,10 @@ class CompetitionViewSet(viewsets.ModelViewSet):
     queryset = Competition.objects.all()
     serializer_class = CompetitionSerializer
     permission_classes = [IsAdminOrReadOnly]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['type', 'status']
+    search_fields = ['name', 'description'] 
+    ordering_fields = ['deadline', 'created_at']
 
 # ViewSet untuk UserProfile
 class UserProfileViewSet(viewsets.ModelViewSet):

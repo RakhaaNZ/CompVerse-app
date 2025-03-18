@@ -44,4 +44,3 @@ urlpatterns = [
     path('api/teams/create/', CreateTeamView.as_view(), name='create_team'),
     path('api/teams/join/', JoinTeamView.as_view(), name='join_team'),
 ]
-

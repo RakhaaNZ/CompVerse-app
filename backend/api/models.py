@@ -8,6 +8,18 @@ class Competition(models.Model):
     end_date = models.DateTimeField()
     max_participants = models.IntegerField()
     is_team_based = models.BooleanField(default=False)
+    
+    COMPETITION_TYPES = [
+        ('individual', 'Individual'),
+        ('team', 'Team'),
+    ]
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('closed', 'Closed'),
+    ]
+
+    type = models.CharField(max_length=20, choices=COMPETITION_TYPES, default='individual')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
 
     def __str__(self):
         return self.title

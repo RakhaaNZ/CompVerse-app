@@ -19,6 +19,17 @@ class CompetitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Competition
         fields = '__all__'  # Menggunakan semua field dalam model
+        
+    def validate_name(self, value):
+        if len(value) < 5:
+            raise serializers.ValidationError("Nama lomba harus minimal 5 karakter.")
+        return value
+
+    def validate_deadline(self, value):
+        from datetime import date
+        if value < date.today():
+            raise serializers.ValidationError("Deadline harus di masa depan.")
+        return value
 
 # Serializer untuk UserProfile
 class UserProfileSerializer(serializers.ModelSerializer):
