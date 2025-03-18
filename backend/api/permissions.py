@@ -1,11 +1,7 @@
-from rest_framework.permissions import BasePermission
+from rest_framework import permissions
 
-class IsAdminOrReadOnly(BasePermission):
-    """
-    - Admin bisa melakukan semua operasi (GET, POST, PUT, DELETE).
-    - User biasa hanya bisa melakukan GET (melihat data).
-    """
+class IsAdminOrReadOnly(permissions.BasePermission):
     def has_permission(self, request, view):
-        if request.method in ['GET']:  # Semua user bisa melihat data
-            return True
-        return request.user.is_staff  # Hanya admin yang bisa mengedit
+        if request.method in permissions.SAFE_METHODS:
+            return True  # Semua user bisa melihat daftar lomba
+        return request.user and request.user.is_staff  # Hanya admin yang bisa mengelola lomba
