@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets, permissions
 from .models import Competition, UserProfile, Registration, Team
-from .serializers import CompetitionSerializer, UserProfileSerializer, RegistrationSerializer, TeamSerializer, UserSerializer
+from .serializers import CompetitionSerializer, UserProfileSerializer, RegistrationSerializer, TeamSerializer, UserSerializer, JoinTeamSerializer
 from django.contrib.auth.models import User
 from rest_framework import generics
 from rest_framework.permissions import AllowAny
@@ -12,6 +12,7 @@ from .permissions import IsAdminOrReadOnly
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.decorators import action
 
 class RegisterUserView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -62,6 +63,18 @@ class TeamViewSet(viewsets.ModelViewSet):
     filterset_fields = ['competition']
     search_fields = ['name']
     ordering_fields = ['created_at']
+    
+    @action(detail=True, methods=['post'], url_path='join')
+    def join_team(self, request, pk=None):
+        """Endpoint untuk user bergabung ke tim"""
+        team = self.get_object()
+        user = request.user
+
+        if user in team.members.all():
+            return Response({'detail': 'You are already in this team.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        team.members.add(user)
+        return Response({'detail': 'Successfully joined the team!'}, status=status.HTTP_200_OK)
 
 class RegisterCompetitionView(APIView):
     permission_classes = [IsAuthenticated]

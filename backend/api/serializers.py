@@ -49,3 +49,13 @@ class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = '__all__'
+
+class JoinTeamSerializer(serializers.Serializer):
+    team_id = serializers.IntegerField()
+
+    def validate_team_id(self, value):
+        try:
+            team = Team.objects.get(id=value)
+        except Team.DoesNotExist:
+            raise serializers.ValidationError("Team not found.")
+        return value
