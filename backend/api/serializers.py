@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import Competition, UserProfile, Registration, Team
 from django.contrib.auth.models import User
-from rest_framework import serializers
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -14,41 +13,37 @@ class UserSerializer(serializers.ModelSerializer):
         user = User.objects.create_user(**validated_data)
         return user
 
-# Serializer untuk Competition
 class CompetitionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Competition
-        fields = '__all__'  # Menggunakan semua field dalam model
-        
-    def validate_name(self, value):
+        fields = '__all__'  
+
+    def validate_title(self, value):
         if len(value) < 5:
-            raise serializers.ValidationError("Nama lomba harus minimal 5 karakter.")
+            raise serializers.ValidationError("The Competition name must be at least 5 characters.")
         return value
 
-    def validate_deadline(self, value):
-        from datetime import date
-        if value < date.today():
-            raise serializers.ValidationError("Deadline harus di masa depan.")
+    def validate_end_date(self, value):
+        from datetime import datetime
+        if value < datetime.now():
+            raise serializers.ValidationError("The end date must be in the future.")
         return value
     
     def validate_max_participants(self, value):
         if value <= 0:
-            raise serializers.ValidationError("Jumlah peserta harus lebih dari 0!")
+            raise serializers.ValidationError("The number of participants must be more than 0!")
         return value
 
-# Serializer untuk UserProfile
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = '__all__'
 
-# Serializer untuk Registration
 class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Registration
         fields = '__all__'
 
-# Serializer untuk Team
 class TeamSerializer(serializers.ModelSerializer):
     members = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
     class Meta:
@@ -57,7 +52,7 @@ class TeamSerializer(serializers.ModelSerializer):
         
     def validate_name(self, value):
         if Team.objects.filter(name=value).exists():
-            raise serializers.ValidationError("Nama tim sudah digunakan.")
+            raise serializers.ValidationError("The team name is already in use.")
         return value
 
 class JoinTeamSerializer(serializers.Serializer):

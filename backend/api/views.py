@@ -11,7 +11,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import action, api_view, permission_classes
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import ValidationError
 
 class RegisterUserView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -28,24 +27,24 @@ class RegisterUserView(generics.CreateAPIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-# ViewSet untuk Competition
 class CompetitionViewSet(viewsets.ModelViewSet):
     queryset = Competition.objects.all()
     serializer_class = CompetitionSerializer
     permission_classes = [IsAdminOrReadOnly]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['type', 'status']
-    search_fields = ['name', 'description'] 
-    ordering_fields = ['deadline', 'created_at']
-    
+    search_fields = ['title', 'description'] 
+    ordering_fields = ['end_date', 'start_date']
+
     @action(detail=True, methods=['get'], url_path='participants')
     def competition_participants(self, request, pk=None):
+        """Menampilkan daftar peserta di lomba tertentu"""
         competition = get_object_or_404(Competition, id=pk)
-        participants = competition.participants.all()  # Asumsikan ada relasi ManyToMany ke User
+        participants = User.objects.filter(registration__competition=competition) 
         serializer = ParticipantSerializer(participants, many=True)
         return Response({
             "competition_id": competition.id,
-            "competition_name": competition.name,
+            "competition_title": competition.title,
             "participants": serializer.data
         })
         
@@ -57,13 +56,11 @@ class CompetitionViewSet(viewsets.ModelViewSet):
         serializer = TeamSerializer(teams, many=True)
         return Response(serializer.data)
 
-# ViewSet untuk UserProfile
 class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
-# ViewSet untuk Registration
 class RegistrationViewSet(viewsets.ModelViewSet):
     queryset = Registration.objects.all()
     serializer_class = RegistrationSerializer
@@ -76,13 +73,12 @@ class RegistrationViewSet(viewsets.ModelViewSet):
         user = request.user
         competition_id = request.data.get("competition")
 
-        # Cek apakah user sudah mendaftar kompetisi ini
+        # Checking user already registered or not
         if Registration.objects.filter(user=user, competition_id=competition_id).exists():
-            return Response({"error": "Anda sudah terdaftar dalam kompetisi ini!"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "You are already registered for this competition!"}, status=status.HTTP_400_BAD_REQUEST)
 
         return super().create(request, *args, **kwargs)
 
-# ViewSet untuk Team
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
@@ -91,42 +87,31 @@ class TeamViewSet(viewsets.ModelViewSet):
     filterset_fields = ['competition']
     search_fields = ['name']
     ordering_fields = ['created_at']
-    
+
     @action(detail=True, methods=['post'], url_path='join')
     def join_team(self, request, pk=None):
         """Endpoint untuk user bergabung ke tim"""
         team = self.get_object()
         user = request.user
 
-        if user in team.members.all():
-            return Response({'detail': 'You are already in this team.'}, status=status.HTTP_400_BAD_REQUEST)
+        if team.members.filter(id=user.id).exists():
+            return Response({'detail': 'Anda sudah tergabung dalam tim ini.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        team.members.add(user)
-        return Response({'detail': 'Successfully joined the team!'}, status=status.HTTP_200_OK)
-    
-    def join_teams(user, team):
-        if user.team is not None:
-            raise ValidationError("Anda sudah tergabung dalam tim lain.")
-        team.members.add(user)
-    
-    def add_member(self, request, team_id):
-        team = get_object_or_404(Team, id=team_id)
-        user = request.user
-
-        # Cek apakah tim sudah penuh
+        # Check Team is full/not
         max_participants = team.competition.max_participants
         if team.members.count() >= max_participants:
             return Response({"error": "Tim sudah mencapai batas maksimal anggota!"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Tambahkan user ke tim
         team.members.add(user)
-        return Response({"message": "Berhasil bergabung ke tim!"}, status=status.HTTP_200_OK)
+        return Response({'detail': 'Berhasil bergabung ke tim!'}, status=status.HTTP_200_OK)
+
 
 class RegisterCompetitionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         """
+        Note:
         Endpoint untuk user mendaftar lomba.
         Jika lomba tipe 'individual', langsung daftar.
         Jika lomba tipe 'group', user harus masuk tim dulu.
@@ -140,16 +125,13 @@ class RegisterCompetitionView(APIView):
         except Competition.DoesNotExist:
             return Response({"error": "Competition not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Cek apakah user sudah terdaftar di lomba ini
         if Registration.objects.filter(user=user, competition=competition).exists():
             return Response({"error": "You are already registered for this competition."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Jika lomba tipe individual, langsung daftar
         if competition.type == "individual":
             Registration.objects.create(user=user, competition=competition)
             return Response({"message": "Successfully registered for the competition."}, status=status.HTTP_201_CREATED)
 
-        # Jika lomba tipe group, user harus masuk tim dulu
         if competition.type == "group":
             if not team_id:
                 return Response({"error": "Team ID is required for group competitions."}, status=status.HTTP_400_BAD_REQUEST)
@@ -159,7 +141,6 @@ class RegisterCompetitionView(APIView):
             except Team.DoesNotExist:
                 return Response({"error": "Team not found"}, status=status.HTTP_404_NOT_FOUND)
 
-            # Cek apakah user sudah ada di tim
             if team.members.filter(id=user.id).exists():
                 Registration.objects.create(user=user, competition=competition, team=team)
                 return Response({"message": "Successfully registered with the team."}, status=status.HTTP_201_CREATED)
@@ -183,7 +164,7 @@ class CreateTeamView(APIView):
             return Response({"error": "Team name already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
         team = Team.objects.create(name=team_name, leader=user)
-        team.members.add(user)  # Pemimpin tim otomatis masuk ke tim
+        team.members.add(user)
         return Response({"message": "Team created successfully.", "team_id": team.id}, status=status.HTTP_201_CREATED)
 
 
@@ -191,23 +172,22 @@ class JoinTeamView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        """
-        Endpoint untuk bergabung ke tim.
-        """
+        """Endpoint untuk bergabung ke tim."""
         user = request.user
         team_id = request.data.get("team_id")
 
         try:
             team = Team.objects.get(id=team_id)
         except Team.DoesNotExist:
-            return Response({"error": "Team not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Tim tidak ditemukan."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Cek apakah user sudah di dalam tim
-        if team.members.filter(id=user.id).exists():
-            return Response({"error": "You are already a member of this team."}, status=status.HTTP_400_BAD_REQUEST)
+        if Team.objects.filter(members=user, competition=team.competition).exists():
+            return Response({"error": "Anda sudah tergabung dalam tim lain dalam kompetisi ini."}, status=status.HTTP_400_BAD_REQUEST)
 
         team.members.add(user)
-        return Response({"message": "Successfully joined the team."}, status=status.HTTP_200_OK)
+        return Response({"message": "Berhasil bergabung ke tim."}, status=status.HTTP_200_OK)
+
+
 
 @api_view(['GET'])
 @permission_classes([IsAdminUser])
