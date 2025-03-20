@@ -30,6 +30,11 @@ class CompetitionSerializer(serializers.ModelSerializer):
         if value < date.today():
             raise serializers.ValidationError("Deadline harus di masa depan.")
         return value
+    
+    def validate_max_participants(self, value):
+        if value <= 0:
+            raise serializers.ValidationError("Jumlah peserta harus lebih dari 0!")
+        return value
 
 # Serializer untuk UserProfile
 class UserProfileSerializer(serializers.ModelSerializer):

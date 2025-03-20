@@ -13,6 +13,8 @@ from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404
+
 
 class RegisterUserView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -54,6 +56,16 @@ class RegistrationViewSet(viewsets.ModelViewSet):
     filterset_fields = ['competition', 'user']
     ordering_fields = ['registered_at']
 
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        competition_id = request.data.get("competition")
+
+        # Cek apakah user sudah mendaftar kompetisi ini
+        if Registration.objects.filter(user=user, competition_id=competition_id).exists():
+            return Response({"error": "Anda sudah terdaftar dalam kompetisi ini!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return super().create(request, *args, **kwargs)
+
 # ViewSet untuk Team
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
@@ -75,6 +87,19 @@ class TeamViewSet(viewsets.ModelViewSet):
 
         team.members.add(user)
         return Response({'detail': 'Successfully joined the team!'}, status=status.HTTP_200_OK)
+    
+    def add_member(self, request, team_id):
+        team = get_object_or_404(Team, id=team_id)
+        user = request.user
+
+        # Cek apakah tim sudah penuh
+        max_participants = team.competition.max_participants
+        if team.members.count() >= max_participants:
+            return Response({"error": "Tim sudah mencapai batas maksimal anggota!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Tambahkan user ke tim
+        team.members.add(user)
+        return Response({"message": "Berhasil bergabung ke tim!"}, status=status.HTTP_200_OK)
 
 class RegisterCompetitionView(APIView):
     permission_classes = [IsAuthenticated]
