@@ -54,6 +54,11 @@ class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = '__all__'
+        
+    def validate_name(self, value):
+        if Team.objects.filter(name=value).exists():
+            raise serializers.ValidationError("Nama tim sudah digunakan.")
+        return value
 
 class JoinTeamSerializer(serializers.Serializer):
     team_id = serializers.IntegerField()
@@ -64,3 +69,9 @@ class JoinTeamSerializer(serializers.Serializer):
         except Team.DoesNotExist:
             raise serializers.ValidationError("Team not found.")
         return value
+    
+# Serializer untuk peserta
+class ParticipantSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'name', 'email']

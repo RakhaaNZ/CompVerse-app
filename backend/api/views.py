@@ -1,20 +1,17 @@
 from django.shortcuts import render
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, generics,status
 from .models import Competition, UserProfile, Registration, Team
-from .serializers import CompetitionSerializer, UserProfileSerializer, RegistrationSerializer, TeamSerializer, UserSerializer, JoinTeamSerializer
+from .serializers import CompetitionSerializer, UserProfileSerializer, RegistrationSerializer, TeamSerializer, UserSerializer, JoinTeamSerializer, ParticipantSerializer
 from django.contrib.auth.models import User
-from rest_framework import generics
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
 from .permissions import IsAdminOrReadOnly
 from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from django.shortcuts import get_object_or_404
-
+from rest_framework.exceptions import ValidationError
 
 class RegisterUserView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -40,6 +37,25 @@ class CompetitionViewSet(viewsets.ModelViewSet):
     filterset_fields = ['type', 'status']
     search_fields = ['name', 'description'] 
     ordering_fields = ['deadline', 'created_at']
+    
+    @action(detail=True, methods=['get'], url_path='participants')
+    def competition_participants(self, request, pk=None):
+        competition = get_object_or_404(Competition, id=pk)
+        participants = competition.participants.all()  # Asumsikan ada relasi ManyToMany ke User
+        serializer = ParticipantSerializer(participants, many=True)
+        return Response({
+            "competition_id": competition.id,
+            "competition_name": competition.name,
+            "participants": serializer.data
+        })
+        
+    @action(detail=True, methods=['get'])
+    def teams(self, request, pk=None):
+        """Menampilkan daftar tim dalam kompetisi tertentu"""
+        competition = get_object_or_404(Competition, id=pk)
+        teams = Team.objects.filter(competition=competition)
+        serializer = TeamSerializer(teams, many=True)
+        return Response(serializer.data)
 
 # ViewSet untuk UserProfile
 class UserProfileViewSet(viewsets.ModelViewSet):
@@ -87,6 +103,11 @@ class TeamViewSet(viewsets.ModelViewSet):
 
         team.members.add(user)
         return Response({'detail': 'Successfully joined the team!'}, status=status.HTTP_200_OK)
+    
+    def join_teams(user, team):
+        if user.team is not None:
+            raise ValidationError("Anda sudah tergabung dalam tim lain.")
+        team.members.add(user)
     
     def add_member(self, request, team_id):
         team = get_object_or_404(Team, id=team_id)
@@ -187,3 +208,20 @@ class JoinTeamView(APIView):
 
         team.members.add(user)
         return Response({"message": "Successfully joined the team."}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAdminUser])
+def admin_dashboard(request):
+    """Menampilkan statistik pendaftaran dan jumlah tim untuk admin"""
+    total_competitions = Competition.objects.count()
+    total_users = User.objects.count()
+    total_teams = Team.objects.count()
+    total_registrations = Registration.objects.count()
+
+    data = {
+        "total_competitions": total_competitions,
+        "total_users": total_users,
+        "total_teams": total_teams,
+        "total_registrations": total_registrations,
+    }
+    return Response(data)
