@@ -123,3 +123,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+* {
+  box-sizing: border-box;
+  scroll-behavior: smooth;
+}
