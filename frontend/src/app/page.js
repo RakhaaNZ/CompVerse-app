@@ -1,9 +1,9 @@
-import SignIn from "./auth/AuthPage";
+import LandingPage from "./ui/home/page";
 
 export default function Home() {
   return (
     <div>
-      <SignIn />
+      <LandingPage />
     </div>
   );
 }

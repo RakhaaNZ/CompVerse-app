@@ -1,10 +1,49 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
-import BG2 from "../../../public/auth-assets/bg2-signup.png";
-import Logo from "../../../public/CompVerse-logo.svg";
+import BG2 from "../../../../public/auth-assets/bg2-signup.png";
+import Logo from "../../../../public/CompVerse-logo.svg";
 import { motion } from "framer-motion";
+import GoogleLoginButton from "../../../components/GoogleLoginButton";
 
 export default function SignInForm({ toggle }) {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("http://localhost:8000/api/token/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || "Login failed");
+      }
+
+      const data = await response.json();
+      localStorage.setItem("access_token", data.access);
+      localStorage.setItem("refresh_token", data.refresh);
+
+      router.push("/ui/home");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section
       id="SignUp"
@@ -57,17 +96,20 @@ export default function SignInForm({ toggle }) {
           transition={{ duration: 0.6, type: "spring", delay: 0.3 }}
           className="relative w-full lg:w-[40%] h-full flex items-center justify-center"
         >
-          <form className="flex flex-col w-full lg:w-[90%] justify-center items-center gap-4 sm:gap-[24px] p-4 sm:p-8 lg:p-0">
-            {/* Title */}
+          <form
+            onSubmit={handleLogin}
+            className="flex flex-col w-full lg:w-[90%] justify-center items-center gap-4 sm:gap-[24px] p-4 sm:p-8 lg:p-0"
+          >
             <div className="text-black text-[22px] sm:text-[26px] lg:text-[32px] font-[500] mb-[20px] sm:mb-[50px]">
               <h1>Welcome, Challenger!</h1>
             </div>
 
-            {/* Email */}
             <div className="relative w-full">
               <input
                 type="email"
                 id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
                 className="text-[14px] sm:text-[18px] peer w-full h-[44px] sm:h-[55px] ring-1 sm:ring-2 ring-black rounded-[16px] sm:rounded-[20px] px-4 focus:outline-none focus:ring-2 focus:ring-[#2541CD]"
               />
@@ -81,11 +123,12 @@ export default function SignInForm({ toggle }) {
               </label>
             </div>
 
-            {/* Password */}
             <div className="relative w-full">
               <input
                 type="password"
                 id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 className="text-[14px] sm:text-[18px] peer w-full h-[44px] sm:h-[55px] ring-1 sm:ring-2 ring-black rounded-[16px] sm:rounded-[20px] px-4 focus:outline-none focus:ring-2 focus:ring-[#2541CD]"
               />
@@ -99,16 +142,17 @@ export default function SignInForm({ toggle }) {
               </label>
             </div>
 
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              className="w-full h-[55px]"
-              type="submit"
-            >
+            <button className="w-full h-[55px]" type="submit">
               <div className="cursor-pointer w-full h-[44px] sm:h-[55px] text-black text-[16px] md:text-[18px] lg:text-[20px] text-white lg:text-black hover:text-white font-[500] sm:font-[600] ring-1 sm:ring-2 ring-black rounded-[16px] sm:rounded-[20px] flex justify-center items-center hover:bg-[#2541CD] bg-[#2541CD] lg:bg-transparent transition">
-                Sign In
+                {loading ? "Signin In..." : "Sign In"}
               </div>
-            </motion.button>
+            </button>
+
+            {error && (
+              <div className="text-red-500 text-sm text-center mb-4">
+                {error}
+              </div>
+            )}
 
             <div className="text-[12px] sm:text-[16px]">
               <p>
@@ -130,12 +174,7 @@ export default function SignInForm({ toggle }) {
               </p>
             </div>
 
-            <button
-              type="submit"
-              className="cursor-pointer w-full h-[44px] sm:h-[55px] text-black text-[16px] md:text-[18px] lg:text-[20px] text-white lg:text-black hover:text-white font-[500] sm:font-[600] ring-1 sm:ring-2 ring-black rounded-[16px] sm:rounded-[20px] flex justify-center items-center hover:bg-[#2541CD] bg-[#2541CD] lg:bg-transparent transition"
-            >
-              Connect With \
-            </button>
+            <GoogleLoginButton />
           </form>
         </motion.div>
       </div>

@@ -1,17 +1,80 @@
 from rest_framework import serializers
 from .models import Competition, UserProfile, Registration, Team
 from django.contrib.auth.models import User
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from django.core.exceptions import ObjectDoesNotExist
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'password']
+        fields = ['id', 'first_name', 'last_name', 'email', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
+        user = User.objects.create_user(
+        username=validated_data['email'],
+        email=validated_data['email'],
+        password=validated_data['password'],
+        first_name=validated_data['first_name'],
+        last_name=validated_data['last_name']
+        )
+    
+        full_name = f"{validated_data['first_name']} {validated_data['last_name']}"
+
+        try:
+            profile = UserProfile.objects.get(user=user)
+        except ObjectDoesNotExist:
+            UserProfile.objects.create(user=user, full_name=full_name)
+
         return user
+    
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email has been registered.")
+        return value
+    
+class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'] = serializers.CharField(required=False)
+        self.fields['email'] = serializers.EmailField(required=True)
+
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['email'] = user.email
+        token['first_name'] = user.first_name
+        token['last_name'] = user.last_name
+        return token
+
+    def validate(self, attrs):
+        email = attrs.get('email')
+        password = attrs.get('password')
+        
+        from django.contrib.auth import authenticate, get_user_model
+        
+        if not email:
+            raise serializers.ValidationError({"email": "Email is required."})
+
+        User = get_user_model()
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"email": "Email not found."})
+
+        user = authenticate(username=user.username, password=password)
+        
+        if not user:
+            raise serializers.ValidationError({"password": "Incorrect password."})
+
+        refresh = self.get_token(user)
+        
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        }
 
 class CompetitionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -65,8 +128,12 @@ class JoinTeamSerializer(serializers.Serializer):
             raise serializers.ValidationError("Team not found.")
         return value
     
-# Serializer untuk peserta
 class ParticipantSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
     class Meta:
         model = User
-        fields = ['id', 'name', 'email']
+        fields = ['id', 'full_name', 'email']
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"

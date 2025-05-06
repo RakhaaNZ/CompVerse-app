@@ -1,14 +1,17 @@
 "use client";
 import React, { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import SignIn from "./SignInForm";
-import SignUp from "./SignUpForm";
+import SignIn from "./signin/page";
+import SignUp from "./signup/page";
 import BG from "../../../public/auth-assets/bg-signup.png";
 import Logo from "../../../public/CompVerse-logo.svg";
 
 export default function AuthPage() {
-  const [isSignIn, setIsSignIn] = useState(true);
+  const searchParams = useSearchParams();
+  const initialForm = searchParams.get("form") === "signup" ? false : true;
+  const [isSignIn, setIsSignIn] = useState(initialForm);
 
   return (
     <section className="relative w-screen h-screen overflow-hidden bg-[#CACACA] flex items-center justify-center px-[15px] sm:px-[60px]">

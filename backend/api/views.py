@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets, permissions, generics,status
 from .models import Competition, UserProfile, Registration, Team
-from .serializers import CompetitionSerializer, UserProfileSerializer, RegistrationSerializer, TeamSerializer, UserSerializer, JoinTeamSerializer, ParticipantSerializer
+from .serializers import CompetitionSerializer, UserProfileSerializer, RegistrationSerializer, TeamSerializer, UserSerializer, JoinTeamSerializer, ParticipantSerializer, EmailTokenObtainPairSerializer
 from django.contrib.auth.models import User
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
@@ -11,6 +11,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import action, api_view, permission_classes
 from django.shortcuts import get_object_or_404
+from rest_framework_simplejwt.views import TokenObtainPairView
+
+class EmailTokenObtainPairView(TokenObtainPairView):
+    serializer_class = EmailTokenObtainPairSerializer
 
 class RegisterUserView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -73,7 +77,6 @@ class RegistrationViewSet(viewsets.ModelViewSet):
         user = request.user
         competition_id = request.data.get("competition")
 
-        # Checking user already registered or not
         if Registration.objects.filter(user=user, competition_id=competition_id).exists():
             return Response({"error": "You are already registered for this competition!"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -97,7 +100,6 @@ class TeamViewSet(viewsets.ModelViewSet):
         if team.members.filter(id=user.id).exists():
             return Response({'detail': 'Anda sudah tergabung dalam tim ini.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check Team is full/not
         max_participants = team.competition.max_participants
         if team.members.count() >= max_participants:
             return Response({"error": "Tim sudah mencapai batas maksimal anggota!"}, status=status.HTTP_400_BAD_REQUEST)
@@ -163,7 +165,14 @@ class CreateTeamView(APIView):
         if Team.objects.filter(name=team_name).exists():
             return Response({"error": "Team name already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
-        team = Team.objects.create(name=team_name, leader=user)
+        competition_id = request.data.get("competition_id")
+        try:
+            competition = Competition.objects.get(id=competition_id)
+        except Competition.DoesNotExist:
+            return Response({"error": "Competition not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        team = Team.objects.create(name=team_name, leader=user, competition=competition)
+
         team.members.add(user)
         return Response({"message": "Team created successfully.", "team_id": team.id}, status=status.HTTP_201_CREATED)
 
