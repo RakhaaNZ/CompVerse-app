@@ -1,9 +1,9 @@
-import SignIn from "./auth/AuthPage";
+import React from "react";
 
 export default function Home() {
   return (
     <div>
-      <SignIn />
+      <div></div>
     </div>
   );
 }
