@@ -142,8 +142,13 @@ export default function SignInForm({ toggle }) {
               </label>
             </div>
 
-            <button className="w-full h-[55px]" type="submit">
-              <div className="cursor-pointer w-full h-[44px] sm:h-[55px] text-black text-[16px] md:text-[18px] lg:text-[20px] text-white lg:text-black hover:text-white font-[500] sm:font-[600] ring-1 sm:ring-2 ring-black rounded-[16px] sm:rounded-[20px] flex justify-center items-center hover:bg-[#2541CD] bg-[#2541CD] lg:bg-transparent transition">
+            <button className="hidden lg:flex w-full h-[55px]" type="submit">
+              <div className="cursor-pointer w-full h-[44px] sm:h-[55px] text-black text-[16px] md:text-[18px] lg:text-[20px] text-black hover:text-white font-[500] sm:font-[600] ring-1 sm:ring-2 ring-black rounded-[16px] sm:rounded-[20px] flex justify-center items-center hover:bg-gradient-to-r from-[#2541CD] via-[#000] to-[#2541CD] bg-transparent transition">
+                {loading ? "Signin In..." : "Sign In"}
+              </div>
+            </button>
+            <button className="lg:hidden w-full h-[55px]" type="submit">
+              <div className="cursor-pointer w-full h-[44px] sm:h-[55px] text-black text-[16px] md:text-[18px] lg:text-[20px] text-white font-[500] sm:font-[600] ring-1 sm:ring-2 ring-black rounded-[16px] sm:rounded-[20px] flex justify-center items-center hover:bg-gradient-to-r from-[#2541CD] via-[#000] to-[#2541CD] bg-gradient-to-r from-[#2541CD] via-[#000] to-[#2541CD] transition">
                 {loading ? "Signin In..." : "Sign In"}
               </div>
             </button>

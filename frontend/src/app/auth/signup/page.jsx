@@ -5,6 +5,7 @@ import Image from "next/image";
 import BG2 from "../../../../public/auth-assets/bg2-signup.png";
 import Logo from "../../../../public/CompVerse-logo.svg";
 import { motion } from "framer-motion";
+import GoogleLoginButton from "../../../components/GoogleLoginButton";
 
 export default function SignUpForm({ toggle }) {
   const [formData, setFormData] = useState({
@@ -79,7 +80,7 @@ export default function SignUpForm({ toggle }) {
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 1, x: -1000 }}
           transition={{ duration: 0.6, type: "spring", delay: 0.3 }}
-          className="hidden lg:flex relative z-10 w-[60%] h-full "
+          className="hidden lg:flex relative z-10 w-[60%] h-full rounded-[40px] "
         >
           <div className="hidden lg:block relative w-full rounded-[38px] overflow-hidden px-6 py-4">
             <Image
@@ -214,11 +215,20 @@ export default function SignUpForm({ toggle }) {
             </div>
 
             <button
-              className="w-full h-[55px]"
+              className="hidden lg:flex w-full h-[55px]"
               type="submit"
               disabled={loading}
             >
-              <div className="cursor-pointer w-full h-[44px] sm:h-[55px] text-black text-[16px] md:text-[18px] lg:text-[20px] text-white lg:text-black hover:text-white font-[500] sm:font-[600] ring-1 sm:ring-2 ring-black rounded-[16px] sm:rounded-[20px] flex justify-center items-center hover:bg-[#2541CD] bg-[#2541CD] lg:bg-transparent transition">
+              <div className="cursor-pointer w-full h-[44px] sm:h-[55px] text-black text-[16px] md:text-[18px] lg:text-[20px] text-black hover:text-white font-[500] sm:font-[600] ring-1 sm:ring-2 ring-black rounded-[16px] sm:rounded-[20px] flex justify-center items-center hover:bg-gradient-to-r from-[#2541CD] via-[#000] to-[#2541CD] bg-transparent transition">
+                {loading ? "Registering..." : "Sign Up"}
+              </div>
+            </button>
+            <button
+              className="lg:hidden w-full h-[55px]"
+              type="submit"
+              disabled={loading}
+            >
+              <div className="cursor-pointer w-full h-[44px] sm:h-[55px] text-black text-[16px] md:text-[18px] lg:text-[20px] text-white font-[500] sm:font-[600] ring-1 sm:ring-2 ring-black rounded-[16px] sm:rounded-[20px] flex justify-center items-center hover:bg-gradient-to-r from-[#2541CD] via-[#000] to-[#2541CD] bg-gradient-to-r from-[#2541CD] via-[#000] to-[#2541CD] transition">
                 {loading ? "Registering..." : "Sign Up"}
               </div>
             </button>
@@ -252,12 +262,7 @@ export default function SignUpForm({ toggle }) {
               </p>
             </div>
 
-            <button
-              type="submit"
-              className="cursor-pointer w-full h-[44px] sm:h-[55px] text-black text-[16px] md:text-[18px] lg:text-[20px] text-white lg:text-black hover:text-white font-[500] sm:font-[600] ring-1 sm:ring-2 ring-black rounded-[16px] sm:rounded-[20px] flex justify-center items-center hover:bg-[#2541CD] bg-[#2541CD] lg:bg-transparent transition"
-            >
-              Connect With \
-            </button>
+            <GoogleLoginButton />
           </form>
         </motion.div>
       </div>
