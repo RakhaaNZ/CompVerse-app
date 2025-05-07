@@ -1,9 +1,9 @@
-import LandingPage from "./ui/home/page";
+import HomePage from "./ui/home/page";
 
 export default function Home() {
   return (
     <div>
-      <LandingPage />
+      <HomePage />
     </div>
   );
 }
