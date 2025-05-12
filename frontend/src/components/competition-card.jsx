@@ -30,7 +30,7 @@ export default function CompetitionCard({ competition }) {
     new Date(competition.close_registration) < new Date();
 
   return (
-    <div className="relative w-full max-w-[300px] md:max-w-[650px] h-[650px] md:h-[400px] flex flex-col md:flex-row gap-[24px] outline-2 outline-white rounded-[40px] px-8 py-6 backdrop-blur-3xl">
+    <div className="relative w-full max-w-[300px] md:max-w-[650px] h-[700px] md:h-[400px] flex flex-col md:flex-row gap-[24px] outline-2 outline-white rounded-[40px] px-8 py-6 backdrop-blur-3xl">
       <div className="z-0 absolute inset-0 flex justify-end items-end w-full h-full rounded-[40px]">
         <Image
           src={BGCard}
@@ -39,8 +39,8 @@ export default function CompetitionCard({ competition }) {
         />
       </div>
 
-      <div className="z-10 w-full md:w-[40%] h-full flex justify-start items-center">
-        <div className="w-[250px] h-[350px] outline-1 outline-white rounded-[36px]">
+      <div className="z-10 w-full md:w-[40%] h-[60%] md:h-full flex flex-col justify-between items-center">
+        <div className="w-[250px] h-[85%] md:h-[80%] outline-1 outline-white rounded-[36px]">
           {competition.poster_competition ? (
             <img
               src={competition.poster_competition}
@@ -53,9 +53,15 @@ export default function CompetitionCard({ competition }) {
             </div>
           )}
         </div>
+
+        <div className="w-full h-[10%] md:h-[15%]">
+          <button className="w-full h-full rounded-[36px] text-[12px] md:text-[20px] font-[400] flex justify-center items-center transition-all duration-300 cursor-pointer bg-white/20 backdrop-blur-2xl text-[#2541CD] ring-2 ring-[#2541CD] hover:shadow-[0_0_15px_#2541CD] hover:scale-95">
+            See Detail
+          </button>
+        </div>
       </div>
 
-      <div className="z-10 w-full md:w-[60%] h-full">
+      <div className="z-10 w-full md:w-[60%] h-[40%] md:h-full">
         <div className="w-full h-full flex flex-col text-white ">
           <div className="w-full h-[35%]">
             <h1 className="text-[18px] md:text-[24px] font-[700]">

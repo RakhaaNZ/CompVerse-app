@@ -6,6 +6,7 @@ import { ChevronDown } from "lucide-react";
 import Image from "next/image";
 import Moon from "../../../../public/competition-assets/moon.png";
 import CompetitionCard from "../../../components/competition-card";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function CompetitionPage() {
   const [competitions, setCompetitions] = useState([]);
@@ -70,6 +71,18 @@ export default function CompetitionPage() {
     });
   };
 
+  const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: (i) => ({
+      opacity: 1,
+      x: 0,
+      transition: {
+        delay: i * 0.12,
+        duration: 0.3,
+      },
+    }),
+  };
+
   if (loading)
     return (
       <div className="flex justify-center items-center h-screen">
@@ -102,83 +115,113 @@ export default function CompetitionPage() {
         <div className="z-40 sticky top-[60px] md:top-[80px] lg:top-[100px] w-full h-[60px] md:h-[80px] lg:h-[100px] bg-gradient-to-r from-[#2541CD] via-white to-[#2541CD]">
           <div className="w-full h-[60px] md:h-[80px] lg:h-[100px] bg-white/23 px-[20px] md:px-[62px] flex flex-row gap-[20px] md:gap-[50px] justify-center lg:justify-start items-center">
             <div className="relative w-[240px] h-[35px] md:h-[50px] ring-1 md:ring-2 ring-black rounded-[16px] md:rounded-[20px] flex flex-row items-center px-[10px] md:px-[20px]">
-              <div
+              <motion.div
                 className="w-full flex justify-between items-center cursor-pointer"
                 onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                whileTap={{ scale: 0.98 }}
               >
                 <h1 className="text-[12px] sm:text-[14px] md:text-[18px] lg:text-[24px] font-[400]">
                   {filters.category || "Category"}
                 </h1>
-                <ChevronDown
-                  className="w-5 h-5 transition-transform duration-200"
-                  style={{
-                    transform: showCategoryDropdown
-                      ? "rotate(180deg)"
-                      : "rotate(0deg)",
-                  }}
-                />
-              </div>
+                <motion.div
+                  animate={{ rotate: showCategoryDropdown ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="w-5 h-5" />
+                </motion.div>
+              </motion.div>
 
-              {showCategoryDropdown && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-white rounded-md shadow-lg z-50">
-                  {categories.map((cat) => (
-                    <div
-                      key={cat}
-                      className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${
-                        filters.category === cat ? "bg-blue-100" : ""
-                      }`}
-                      onClick={() => handleFilterChange("category", cat)}
-                    >
-                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                    </div>
-                  ))}
-                </div>
-              )}
+              <AnimatePresence>
+                {showCategoryDropdown && (
+                  <motion.div
+                    className="absolute top-full left-0 mt-1 w-full bg-white/80 backdrop-blur-sm rounded-md shadow-lg z-50 overflow-hidden"
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                  >
+                    {categories.map((cat, i) => (
+                      <motion.div
+                        key={cat}
+                        custom={i}
+                        variants={itemVariants}
+                        className={`px-4 py-2 hover:bg-[#2541CD] hover:text-white cursor-pointer ${
+                          filters.category === cat ? "bg-blue-100" : ""
+                        }`}
+                        onClick={() => handleFilterChange("category", cat)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             <div className="relative w-[240px] h-[35px] md:h-[50px] ring-1 md:ring-2 ring-black rounded-[16px] md:rounded-[20px] flex flex-row items-center px-[10px] md:px-[20px]">
-              <div
+              <motion.div
                 className="w-full flex justify-between items-center cursor-pointer"
                 onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+                whileTap={{ scale: 0.98 }}
               >
                 <h1 className="text-[12px] sm:text-[14px] md:text-[18px] lg:text-[24px] font-[400]">
                   {filters.type || "Type"}
                 </h1>
-                <ChevronDown
-                  className="w-5 h-5 transition-transform duration-200"
-                  style={{
-                    transform: showTypeDropdown
-                      ? "rotate(180deg)"
-                      : "rotate(0deg)",
-                  }}
-                />
-              </div>
+                <motion.div
+                  animate={{ rotate: showTypeDropdown ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="w-5 h-5" />
+                </motion.div>
+              </motion.div>
 
-              {showTypeDropdown && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-white rounded-md shadow-lg z-50">
-                  {types.map((type) => (
-                    <div
-                      key={type}
-                      className={`px-4 py-2 hover:bg-gray-100 cursor-pointer ${
-                        filters.type === type ? "bg-blue-100" : ""
-                      }`}
-                      onClick={() => handleFilterChange("type", type)}
-                    >
-                      {type.charAt(0).toUpperCase() + type.slice(1)}
-                    </div>
-                  ))}
-                </div>
-              )}
+              <AnimatePresence>
+                {showTypeDropdown && (
+                  <motion.div
+                    className="absolute top-full left-0 mt-1 w-full bg-white/80 backdrop-blur-sm rounded-md shadow-lg z-50 overflow-hidden"
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                  >
+                    {types.map((type, i) => (
+                      <motion.div
+                        key={type}
+                        custom={i}
+                        variants={itemVariants}
+                        className={`px-4 py-2 hover:bg-[#2541CD] hover:text-white cursor-pointer ${
+                          filters.type === type ? "bg-blue-100" : ""
+                        }`}
+                        onClick={() => handleFilterChange("type", type)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
-            {(filters.category || filters.type) && (
-              <button
-                onClick={clearFilters}
-                className="cursor-pointer ml-4 px-3 py-1 bg-red-500 text-white rounded-md text-[12px] sm:text-[14px] md:text-[18px] lg:text-[24px] hover:bg-red-600 transition-colors"
-              >
-                Clear Filters
-              </button>
-            )}
+            <AnimatePresence>
+              {(filters.category || filters.type) && (
+                <motion.button
+                  onClick={clearFilters}
+                  className="cursor-pointer ml-4 px-3 py-1 bg-red-500 text-white rounded-md text-[12px] sm:text-[14px] md:text-[18px] lg:text-[24px] hover:bg-red-600 transition-colors"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Clear Filters
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

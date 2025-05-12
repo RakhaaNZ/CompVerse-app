@@ -1,6 +1,5 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-// api.js
 export async function fetchCompetitions(filters = {}) {
   const queryParams = new URLSearchParams();
 
