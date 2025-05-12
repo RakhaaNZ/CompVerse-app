@@ -64,6 +64,19 @@ class CompetitionViewSet(viewsets.ModelViewSet):
         teams = Team.objects.filter(competition=competition)
         serializer = TeamSerializer(teams, many=True)
         return Response(serializer.data)
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        
+        category = self.request.query_params.get('category')
+        if category:
+            queryset = queryset.filter(category=category)
+            
+        comp_type = self.request.query_params.get('type')
+        if comp_type:
+            queryset = queryset.filter(type=comp_type)
+            
+        return queryset
 
 # Config Supabase
 supabase: Client = create_client(

@@ -40,7 +40,7 @@ export default function CompetitionCard({ competition }) {
       </div>
 
       <div className="z-10 w-full md:w-[40%] h-full flex justify-start items-center">
-        <div className="w-[250px] h-auto md:h-[350px] outline-1 outline-white rounded-[36px]">
+        <div className="w-[250px] h-[350px] outline-1 outline-white rounded-[36px]">
           {competition.poster_competition ? (
             <img
               src={competition.poster_competition}
@@ -65,7 +65,7 @@ export default function CompetitionCard({ competition }) {
               {competition.description}
             </h1>
           </div>
-          <div className="w-full h-[50%] text-[10px] md:text-[16px] font-[400] flex flex-col gap-1">
+          <div className="w-full h-[50%] text-[10px] md:text-[16px] font-[400] flex flex-col gap-1 mb-[10px] sm:mb-0">
             <p>
               <span className="font-bold">Category:</span>{" "}
               {competition.category}
