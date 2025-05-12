@@ -12,6 +12,11 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import action, api_view, permission_classes
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework.parsers import MultiPartParser
+import uuid
+from datetime import datetime
+from supabase import create_client, Client
+import os
 
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
@@ -59,6 +64,46 @@ class CompetitionViewSet(viewsets.ModelViewSet):
         teams = Team.objects.filter(competition=competition)
         serializer = TeamSerializer(teams, many=True)
         return Response(serializer.data)
+
+# Config Supabase
+supabase: Client = create_client(
+    os.getenv('SUPABASE_URL'),
+    os.getenv('SUPABASE_KEY')
+)
+
+class UploadCompetitionPosterView(APIView):
+    parser_classes = [MultiPartParser]
+    permission_classes = [IsAdminUser]
+
+    def post(self, request, competition_id):
+        competition = get_object_or_404(Competition, id=competition_id)
+        
+        if 'poster' not in request.FILES:
+            return Response({"error": "No poster file provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        poster_file = request.FILES['poster']
+        file_extension = os.path.splitext(poster_file.name)[1]
+        unique_filename = f"competition_{competition_id}_{uuid.uuid4()}{file_extension}"
+        
+        try:
+            res = supabase.storage.from_("competition-posters").upload(
+                file=poster_file,
+                path=unique_filename,
+                file_options={"content-type": poster_file.content_type}
+            )
+            
+            poster_url = supabase.storage.from_("competition-posters").get_public_url(unique_filename)
+            
+            competition.poster_competition = poster_url
+            competition.save()
+            
+            return Response({
+                "message": "Poster uploaded successfully",
+                "poster_url": poster_url
+            }, status=status.HTTP_200_OK)
+            
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class UserProfileViewSet(viewsets.ModelViewSet):
     queryset = UserProfile.objects.all()

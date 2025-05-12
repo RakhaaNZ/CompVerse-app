@@ -75,11 +75,24 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         }
-
+    
 class CompetitionSerializer(serializers.ModelSerializer):
+    formatted_start_date = serializers.SerializerMethodField()
+    formatted_end_date = serializers.SerializerMethodField()
+    formatted_close_registration = serializers.SerializerMethodField()
+    
     class Meta:
         model = Competition
         fields = '__all__'  
+
+    def get_formatted_start_date(self, obj):
+        return obj.start_date.strftime("%d %B %Y, %H:%M")
+
+    def get_formatted_end_date(self, obj):
+        return obj.end_date.strftime("%d %B %Y, %H:%M")
+
+    def get_formatted_close_registration(self, obj):
+        return obj.close_registration.strftime("%d %B %Y, %H:%M")
 
     def validate_title(self, value):
         if len(value) < 5:
@@ -90,6 +103,12 @@ class CompetitionSerializer(serializers.ModelSerializer):
         from datetime import datetime
         if value < datetime.now():
             raise serializers.ValidationError("The end date must be in the future.")
+        return value
+    
+    def validate_close_registration(self, value):
+        from datetime import datetime
+        if value < datetime.now():
+            raise serializers.ValidationError("Close registration date must be in the future.")
         return value
     
     def validate_max_participants(self, value):

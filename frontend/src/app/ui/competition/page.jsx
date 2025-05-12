@@ -9,18 +9,37 @@ import CompetitionCard from "../../../components/competition-card";
 
 export default function CompetitionPage() {
   const [competitions, setCompetitions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function loadCompetitions() {
+    const loadCompetitions = async () => {
       try {
         const data = await fetchCompetitions();
         setCompetitions(data);
-      } catch (error) {
-        console.error("Error fetching competitions:", error);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
     loadCompetitions();
   }, []);
+
+  if (loading)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Loading competitions...</p>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <p>Error: {error}</p>
+      </div>
+    );
 
   return (
     <section id="competition" className="relative w-screen h-full">
@@ -68,13 +87,17 @@ export default function CompetitionPage() {
         <div className="z-20 w-full h-full px-[40px] md:px-[62px] my-[80px] flex flex-row justify-center items-center">
           <div className="w-full max-w-[1600px] h-full flex flex-wrap flex-row justify-center 2xl:justify-between items-center gap-15 sm:gap-20">
             {competitions.length > 0 ? (
-              competitions.map((comp) => (
-                <CompetitionCard key={comp.id} competition={comp} />
+              competitions.map((competition) => (
+                <CompetitionCard
+                  key={competition.id}
+                  competition={competition}
+                />
               ))
             ) : (
-              <p className="text-white">Loading competitions...</p>
+              <div className="text-white text-center py-10">
+                <p>No competitions available at the moment.</p>
+              </div>
             )}
-            {/* <CompetitionCard /> */}
           </div>
         </div>
 

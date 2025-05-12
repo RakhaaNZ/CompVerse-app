@@ -2,6 +2,8 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from django.utils import timezone
+from datetime import timedelta
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
@@ -13,24 +15,51 @@ class Competition(models.Model):
     description = models.TextField()
     start_date = models.DateTimeField()
     end_date = models.DateTimeField()
+    close_registration = models.DateTimeField(
+        default=timezone.now() + timedelta(days=7) 
+    )
     max_participants = models.IntegerField()
     is_team_based = models.BooleanField(default=False)
+    poster_competition = models.URLField(max_length=500, blank=True, null=True)
     
     COMPETITION_TYPES = [
-        ('individual', 'Individual'),
-        ('team', 'Team'),
+        ('Individual', 'Individual'),
+        ('Team', 'Team'),
     ]
+    
+    CATEGORY_CHOICES = [
+        ('Technology', 'Technology'),
+        ('Business', 'Business'),
+        ('Art', 'Art & Design'),
+        ('Science', 'Science'),
+        ('other', 'Other'),
+    ]
+    
+    category = models.CharField(
+        max_length=20, 
+        choices=CATEGORY_CHOICES, 
+        default='Technology'
+    )
+    
     STATUS_CHOICES = [
-        ('open', 'Open'),
-        ('closed', 'Closed'),
+        ('Open', 'Open'),
+        ('Closed', 'Closed'),
     ]
 
-    type = models.CharField(max_length=20, choices=COMPETITION_TYPES, default='individual')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open')
+    type = models.CharField(max_length=20, choices=COMPETITION_TYPES, default='Individual')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Open')
+    
+    def save(self, *args, **kwargs):
+        if self.close_registration and timezone.now() > self.close_registration:
+            self.status = 'Closed'
+        super().save(*args, **kwargs)
+        
+    @property
+    def is_registration_open(self):
+        return self.status == 'Open' and timezone.now() <= self.close_registration
 
     def __str__(self):
         return self.title
-
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -53,7 +82,7 @@ class Registration(models.Model):
 class Team(models.Model):
     name = models.CharField(max_length=255, unique=True)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="teams")
-    leader = models.ForeignKey(User, on_delete=models.CASCADE, related_name="led_teams")  
+    leader = models.ForeignKey(User, on_delete=models.CASCADE, related_name="led_teams", null=True, blank=True)  
     members = models.ManyToManyField(User, related_name="joined_teams") 
     created_at = models.DateTimeField(auto_now_add=True)
 
