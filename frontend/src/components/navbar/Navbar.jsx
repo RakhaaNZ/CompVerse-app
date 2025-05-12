@@ -10,7 +10,7 @@ const Navbar = () => {
       id="Nav"
       className="nav w-full h-[60px] md:h-[80px] lg:h-[100px] flex fixed z-40"
     >
-      <div className="w-screen h-full relative flex flex-row justify-between bg-white/4">
+      <div className="w-screen h-full relative flex flex-row justify-between bg-[#030210]">
         <div className="pl-[30px] pl-[20px] md:pl-[70px] lg:pl-[60px] flex justify-start items-center">
           <Link href="/" className="flex items-center">
             <Image

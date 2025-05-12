@@ -128,3 +128,12 @@
   box-sizing: border-box;
   scroll-behavior: smooth;
 }
+
+h1::selection {
+  background: white;
+  color: #2541cd;
+}
+h1::-moz-selection {
+  background: white;
+  color: #2541cd;
+}

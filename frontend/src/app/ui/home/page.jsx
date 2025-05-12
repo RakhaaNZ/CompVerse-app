@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { motion, useAnimation } from "framer-motion";
 import Landing from "./landing";
+import Competition from "../competition/page";
 
 const HomePage = () => {
   const [isScrolling, setIsScrolling] = useState(false);
@@ -31,18 +32,18 @@ const HomePage = () => {
         scrollToSection(nextSectionRef);
         controls.start({
           y: [0, 20, 0],
-          opacity: [1],
+          opacity: [1, 0.1, 1],
           transition: { duration: 1 },
         });
       } else if (
         e.deltaY < 0 &&
-        Math.abs(nextSectionTop) < window.innerHeight / 2
+        Math.abs(nextSectionTop) < window.innerHeight / 100
       ) {
         scrollToSection(landingRef);
         controls.start({
           y: [0, -20, 0],
-          opacity: [1],
-          transition: { duration: 1 },
+          opacity: [1, 0.1, 1],
+          transition: { duration: 1, delay: 0.3 },
         });
       }
     };
@@ -61,7 +62,7 @@ const HomePage = () => {
   };
 
   return (
-    <div className="scroll-smooth relative overflow-hidden  bg-[#030210] ">
+    <div className="scroll-smooth relative bg-[#030210] ">
       <motion.section
         ref={landingRef}
         id="landing"
@@ -75,11 +76,11 @@ const HomePage = () => {
       <motion.section
         ref={nextSectionRef}
         id="next-section"
-        className="h-screen flex items-center justify-center"
+        className="h-full flex items-center justify-center"
         initial={{ opacity: 1 }}
         animate={controls}
       >
-        <div></div>
+        <Competition />
       </motion.section>
     </div>
   );
