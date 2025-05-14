@@ -75,7 +75,7 @@ const HomePage = () => {
 
       <motion.section
         ref={nextSectionRef}
-        id="next-section"
+        id="next-section competition"
         className="h-full flex items-center justify-center"
         initial={{ opacity: 1 }}
         animate={controls}

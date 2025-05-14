@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Image from "next/image";
 import Hero1 from "../../../../public/landing-assets/Hero1.png";
 import { Mouse } from "lucide-react";
@@ -25,9 +26,11 @@ export default function LandingPage({ onScrollDown }) {
                 before:animate-[shimmer_4s_infinite]
                 cursor-pointer"
             >
-              <h1 className="text-[12px] sm:text-[14px] md:text-[18px] lg:text-[24px] font-[400] text-white">
-                Explore
-              </h1>
+              <Link href="#competition">
+                <h1 className="text-[12px] sm:text-[14px] md:text-[18px] lg:text-[24px] font-[400] text-white">
+                  Explore
+                </h1>
+              </Link>
             </div>
           </div>
         </div>

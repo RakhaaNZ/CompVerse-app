@@ -8,6 +8,7 @@ import Image from "next/image";
 import BG from "../../../../../public/competition-assets/detail/bg.png";
 import { Calendar } from "../../../../components/calendar/calendar";
 import { format } from "date-fns";
+import { ChevronDown } from "lucide-react";
 
 export default function DetailCompetition() {
   const [competition, setCompetition] = useState(null);
@@ -75,7 +76,12 @@ export default function DetailCompetition() {
       className="relative w-screen h-full bg-[#030210]"
     >
       <div className="relative w-full h-full flex flex-col justify-center items-center px-[40px] sm:px-[62px] py-[60px] md:py-[80px] lg:py-[100px]">
-        <div className="w-full max-w-[800px] 2xl:max-w-[1800px] h-full flex justify-start items-start mb-[20px]">
+        <div className="w-full max-w-[800px] 2xl:max-w-[1800px] h-full flex flex-row justify-start items-center gap-6 mb-[20px]">
+          <div className="w-[60px] h-[60px] rounded-[20px] border-2 border-white flex justify-center items-center cursor-pointer">
+            <Link href="/ui/home#competition">
+              <ChevronDown className="text-white rotate-90" />
+            </Link>
+          </div>
           <h1 className="font-[700] text-[21px] sm:text-[28px] md:text-[34px] lg:text-[40px] text-left text-white drop-shadow-[0_0_7px_#FFFFFF]">
             {competition.title}
           </h1>
