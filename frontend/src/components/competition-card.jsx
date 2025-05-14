@@ -2,7 +2,6 @@ import Image from "next/image";
 import Link from "next/link";
 import BGCard from "../../public/competition-assets/bg-card.png";
 import { format } from "date-fns";
-import DetailCompetition from "../app/ui/detail-competition/page";
 
 export default function CompetitionCard({ competition }) {
   const startDate = format(
@@ -56,8 +55,11 @@ export default function CompetitionCard({ competition }) {
           )}
         </div>
 
-        <Link href="/detail-competition" className="w-full h-[10%] md:h-[15%]">
-          <button className="w-full h-full rounded-[36px] text-[12px] md:text-[20px] font-[400] flex justify-center items-center transition-all duration-300 cursor-pointer bg-white/20 backdrop-blur-2xl text-[#2541CD] ring-2 ring-[#2541CD] hover:shadow-[0_0_15px_#2541CD] hover:scale-95">
+        <Link
+          href={`/ui/detail-competition/${competition.id}`}
+          className="w-full h-[10%] md:h-[15%]"
+        >
+          <button className="w-full h-full rounded-[36px] text-[12px] md:text-[20px] font-[400] flex justify-center items-center transition-all duration-300 cursor-pointer bg-white backdrop-blur-2xl text-[#2541CD] ring-2 ring-[#2541CD] hover:shadow-[0_0_15px_#2541CD] hover:scale-95">
             See Detail
           </button>
         </Link>
