@@ -1,0 +1,255 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Pencil, Check, X } from "lucide-react";
+import { supabase } from "../../../lib/supabaseClient";
+import Image from "next/image";
+
+export default function UserSection() {
+  const [profile, setProfile] = useState(null);
+  const [editingField, setEditingField] = useState(null);
+  const [editValue, setEditValue] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken =
+        session?.access_token || localStorage.getItem("access_token");
+
+      if (!accessToken) return;
+
+      try {
+        const res = await fetch("http://localhost:8000/api/users/", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setProfile(data[0]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleEditClick = (field, value) => {
+    setEditingField(field);
+    setEditValue(value || "");
+  };
+
+  const handleCancelEdit = () => {
+    setEditingField(null);
+    setEditValue("");
+  };
+
+  const handleSaveEdit = async () => {
+    if (!profile || !editingField) return;
+
+    setIsLoading(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken =
+        session?.access_token || localStorage.getItem("access_token");
+
+      const updatedProfile = {
+        ...profile,
+        [editingField]: editValue,
+      };
+
+      const res = await fetch(
+        `http://localhost:8000/api/users/${profile.id}/`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify(updatedProfile),
+        }
+      );
+
+      if (!res.ok) throw new Error("Failed to update profile");
+
+      const data = await res.json();
+      setProfile(data);
+      setEditingField(null);
+    } catch (error) {
+      console.error("Error updating profile:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (!profile) {
+    return (
+      <div className="text-white text-center mt-10">Loading profile...</div>
+    );
+  }
+
+  return (
+    <div className="w-full h-full relative flex flex-col gap-10 justify-center items-center">
+      {/* Header  */}
+      <div className="w-full h-[20%] border-2 border-white rounded-[40px] px-20 py-4">
+        <div className="w-full h-full flex flex-row justify-start items-center">
+          <div className="w-22 h-20 rounded-full bg-white overflow-hidden">
+            {profile.profile_picture && (
+              <Image
+                src={profile.profile_picture}
+                alt="Profile"
+                width={80}
+                height={80}
+                className="object-cover w-full h-full"
+              />
+            )}
+          </div>
+          <div className="w-full h-full flex flex-col justify-center items-start gap-1 pl-[20px]">
+            <h1 className="text-white text-[22px] font-[400]">
+              {profile.full_name || "No name"}
+            </h1>
+            <p className="text-white/80 text-[18px] font-[400]">
+              {profile.email || "No email"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Details */}
+      <div className="w-full h-[80%] border-2 border-white rounded-[40px] flex flex-row justify-center items-center gap-25 p-15">
+        <div className="w-[50%] h-full flex flex-col gap-6">
+          {[
+            {
+              field: "first_name",
+              label: "First Name",
+              value: profile.first_name,
+            },
+            {
+              field: "last_name",
+              label: "Last Name",
+              value: profile.last_name,
+            },
+            { field: "gender", label: "Gender", value: profile.gender },
+            { field: "age", label: "Age", value: profile.age },
+          ].map((item) => (
+            <ProfileField
+              key={item.field}
+              field={item.field}
+              label={item.label}
+              value={item.value}
+              editingField={editingField}
+              editValue={editValue}
+              onEditChange={setEditValue}
+              onEditClick={handleEditClick}
+              onSave={handleSaveEdit}
+              onCancel={handleCancelEdit}
+              isLoading={isLoading}
+            />
+          ))}
+        </div>
+
+        <div className="w-[50%] h-full flex flex-col gap-6">
+          {[
+            { field: "location", label: "Location", value: profile.location },
+            {
+              field: "field_of_study",
+              label: "Field of Study",
+              value: profile.field_of_study,
+            },
+            {
+              field: "institution_company",
+              label: "Institution / Company",
+              value: profile.institution_company,
+            },
+          ].map((item) => (
+            <ProfileField
+              key={item.field}
+              field={item.field}
+              label={item.label}
+              value={item.value}
+              editingField={editingField}
+              editValue={editValue}
+              onEditChange={setEditValue}
+              onEditClick={handleEditClick}
+              onSave={handleSaveEdit}
+              onCancel={handleCancelEdit}
+              isLoading={isLoading}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileField({
+  field,
+  label,
+  value,
+  editingField,
+  editValue,
+  onEditChange,
+  onEditClick,
+  onSave,
+  onCancel,
+  isLoading,
+}) {
+  const isEditing = editingField === field;
+
+  return (
+    <div className="w-full h-auto flex flex-col gap-2">
+      <h1 className="text-white text-[22px] font-[400]">{label}</h1>
+      <div className="w-full h-[50px] flex flex-row justify-between items-center px-6 py-2 ring-white ring-2 rounded-[20px]">
+        {isEditing ? (
+          <input
+            type={field === "age" ? "number" : "text"}
+            value={editValue}
+            onChange={(e) => onEditChange(e.target.value)}
+            className="flex-1 bg-transparent text-white/80 text-[18px] font-[400] outline-none"
+            autoFocus
+          />
+        ) : (
+          <h1 className="text-white/80 text-[18px] font-[400]">
+            {value || "-"}
+          </h1>
+        )}
+        <div className="w-[50px] h-full flex flex-row justify-end items-center">
+          <div className="w-[2px] h-full bg-white"></div>
+          {isEditing ? (
+            <div className="flex gap-2 ml-2">
+              <button
+                onClick={onSave}
+                disabled={isLoading}
+                className="text-green-500 hover:text-green-400 disabled:opacity-50"
+              >
+                <Check className="w-5 h-5" />
+              </button>
+              <button
+                onClick={onCancel}
+                disabled={isLoading}
+                className="text-red-500 hover:text-red-400 disabled:opacity-50"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => onEditClick(field, value)}
+              className="cursor-pointer w-full h-full flex justify-end"
+            >
+              <Pencil className="w-[25px] h-auto text-white" />
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

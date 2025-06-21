@@ -138,6 +138,15 @@ h1::-moz-selection {
   color: #2541cd;
 }
 
+p::selection {
+  background: white;
+  color: #2541cd;
+}
+p::-moz-selection {
+  background: white;
+  color: #2541cd;
+}
+
 .dropdown-enter {
   opacity: 0;
   transform: translateY(-10px);
@@ -154,4 +163,16 @@ h1::-moz-selection {
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 200ms, transform 200ms;
+}
+
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
 }

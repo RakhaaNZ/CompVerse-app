@@ -1,4 +1,4 @@
-import HomePage from "./ui/detail-competition/[id]/page";
+import HomePage from "./ui/home/page";
 
 export default function Home() {
   return (

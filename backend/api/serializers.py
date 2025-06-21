@@ -117,9 +117,26 @@ class CompetitionSerializer(serializers.ModelSerializer):
         return value
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    first_name = serializers.CharField(source='user.first_name', read_only=True)
+    last_name = serializers.CharField(source='user.last_name', read_only=True)
+    email = serializers.CharField(source='user.email', read_only=True)
+
     class Meta:
         model = UserProfile
-        fields = '__all__'
+        fields = [
+            'id',
+            'first_name',
+            'last_name',
+            'email',
+            'full_name',
+            'bio',
+            'gender',
+            'age',
+            'location',
+            'field_of_study',
+            'institution_company',
+            'profile_picture'
+        ]
 
 class RegistrationSerializer(serializers.ModelSerializer):
     class Meta:

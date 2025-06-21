@@ -12,7 +12,7 @@ from rest_framework_simplejwt.views import (
 # Router for API
 router = DefaultRouter()
 router.register(r'competitions', CompetitionViewSet, basename='competition')
-router.register(r'users', UserProfileViewSet)
+router.register(r'users', UserProfileViewSet, basename='userprofile')
 router.register(r'registrations', RegistrationViewSet, basename='registration')
 router.register(r'teams', TeamViewSet, basename='team')
 

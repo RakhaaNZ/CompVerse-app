@@ -6,7 +6,7 @@ import Link from "next/link";
 import Logo from "../../../public/CompVerse-logo.svg";
 import MiniNavbar from "./MiniNavbar";
 import { useRouter } from "next/navigation";
-import { UserCircle } from "lucide-react";
+import { CircleUser } from "lucide-react";
 import { LogOut } from "lucide-react";
 import { supabase } from "../../lib/supabaseClient";
 
@@ -126,7 +126,7 @@ const Navbar = () => {
                 href="/ui/profile"
                 className="text-white hover:text-[#2541CD] transition duration-300 ease-in-out"
               >
-                <UserCircle className="stroke-1 w-13 h-13" />
+                <CircleUser className="stroke-1 w-13 h-13" />
               </Link>
 
               <div

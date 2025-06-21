@@ -70,6 +70,9 @@ export default function DetailCompetition() {
     competition.close_registration
   );
 
+  const isRegistrationClosed =
+    new Date(competition.close_registration) < new Date();
+
   return (
     <section
       id="detail-competition"
@@ -240,10 +243,7 @@ export default function DetailCompetition() {
                 </div>
               </div>
 
-              <Link
-                href={`/register-competition/${params.id}`}
-                className="cursor-pointer relative w-full h-[60px] md:h-[80px] flex justify-center items-center ring-2 ring-white rounded-[40px] py-8 px-10 hover:ring-[#2541CD] transition-all duration-300 ease-in-out hover:shadow-[10px_10px_33px_#121212,#2541CD_0px_0px_30px_5px] hover:scale-99"
-              >
+              <div className="relative w-full h-[60px] md:h-[80px] flex justify-center items-center rounded-[40px]">
                 <div className="z-0 absolute top-0 left-0 w-full h-full">
                   <Image
                     src={BG}
@@ -253,11 +253,28 @@ export default function DetailCompetition() {
                 </div>
 
                 <div className="w-full h-full rounded-[36px] flex justify-center items-center">
-                  <h1 className="text-white text-[18px] md:text-[24px] font-[700]">
-                    Register Now
-                  </h1>
+                  {isRegistrationClosed ? (
+                    <div
+                      className="z-10 w-full h-full rounded-[36px] text-[12px] md:text-[20px] font-[400] flex justify-center items-center bg-gray-700 text-gray-400 ring-2 ring-gray-500 cursor-not-allowed"
+                      disabled={
+                        isRegistrationClosed || competition.status !== "open"
+                      }
+                    >
+                      <h1>Registration Closed</h1>
+                    </div>
+                  ) : (
+                    <Link
+                      href={`/register-competition/${params.id}`}
+                      className="z-10 w-full h-full rounded-[36px] text-[12px] md:text-[20px] font-[400] flex justify-center items-center transition-all duration-300 cursor-pointer text-white ring-2 ring-white hover:ring-[#2541CD] transition-all duration-300 ease-in-out hover:shadow-[0_0_15px_#2541CD] hover:scale-99"
+                      disabled={
+                        isRegistrationClosed || competition.status !== "open"
+                      }
+                    >
+                      <h1>Registration Now</h1>
+                    </Link>
+                  )}
                 </div>
-              </Link>
+              </div>
             </div>
           </div>
         </div>

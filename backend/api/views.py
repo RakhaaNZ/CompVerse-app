@@ -123,6 +123,12 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_queryset(self):
+        return self.queryset.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
 class RegistrationViewSet(viewsets.ModelViewSet):
     queryset = Registration.objects.all()
     serializer_class = RegistrationSerializer
@@ -143,7 +149,7 @@ class RegistrationViewSet(viewsets.ModelViewSet):
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
-    permission_classes = [permissions.IsAuthenticated] 
+    # permission_classes = [permissions.IsAuthenticated] 
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['competition']
     search_fields = ['name']
