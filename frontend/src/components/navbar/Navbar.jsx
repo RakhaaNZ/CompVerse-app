@@ -13,6 +13,82 @@ import { supabase } from "../../lib/supabaseClient";
 const Navbar = () => {
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken =
+        session?.access_token || localStorage.getItem("access_token");
+
+      if (!accessToken) return;
+
+      try {
+        const res = await fetch("http://localhost:8000/api/users/", {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          setProfile(data[0]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  const handleUpload = async (event) => {
+    try {
+      setUploading(true);
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken =
+        session?.access_token || localStorage.getItem("access_token");
+
+      if (!accessToken) {
+        throw new Error("Session expired. Please sign in again");
+      }
+
+      const res = await fetch(
+        `http://localhost:8000/api/users/${profile.id}/`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            profile_picture: `${publicUrl}?t=${Date.now()}`,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("API Error:", errorData);
+        throw new Error(errorData.message || "Failed to update profile");
+      }
+
+      const data = await res.json();
+      setProfile(data);
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert(`Error: ${error.message || "Failed to upload image"}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -126,7 +202,21 @@ const Navbar = () => {
                 href="/ui/profile"
                 className="text-white hover:text-[#2541CD] transition duration-300 ease-in-out"
               >
-                <CircleUser className="stroke-1 w-13 h-13" />
+                {profile.profile_picture ? (
+                  <div className="w-11 h-11 rounded-full ring-2 ring-white overflow-hidden">
+                    <Image
+                      src={profile.profile_picture}
+                      alt="Profile"
+                      width={30}
+                      height={30}
+                      className="object-cover w-full h-full"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <CircleUser className="stroke-1 w-13 h-13" />
+                  </div>
+                )}
               </Link>
 
               <div

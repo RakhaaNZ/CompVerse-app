@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Pencil, Check, X } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Pencil, Check, X, Upload, User } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import Image from "next/image";
 
@@ -10,6 +10,8 @@ export default function UserSection() {
   const [editingField, setEditingField] = useState(null);
   const [editValue, setEditValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -90,6 +92,85 @@ export default function UserSection() {
     }
   };
 
+  const handleUpload = async (event) => {
+    try {
+      setUploading(true);
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken =
+        session?.access_token || localStorage.getItem("access_token");
+
+      if (!accessToken) {
+        throw new Error("Session expired. Please sign in again");
+      }
+
+      const validTypes = ["image/jpeg", "image/png", "image/webp"];
+      if (!validTypes.includes(file.type)) {
+        throw new Error("Hanya file JPEG, PNG, atau WEBP yang diperbolehkan");
+      }
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `user-uploads/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("profile-pictures")
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type,
+        });
+
+      if (uploadError) {
+        console.error("Upload error details:", uploadError);
+        throw new Error(uploadError.message || "Failed to upload image");
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("profile-pictures").getPublicUrl(filePath);
+
+      console.log("Generated URL:", publicUrl);
+
+      const res = await fetch(
+        `http://localhost:8000/api/users/${profile.id}/`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            profile_picture: `${publicUrl}?t=${Date.now()}`,
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("API Error:", errorData);
+        throw new Error(errorData.message || "Failed to update profile");
+      }
+
+      const data = await res.json();
+      setProfile(data);
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert(`Error: ${error.message || "Failed to upload image"}`);
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current.click();
+  };
+
   if (!profile) {
     return (
       <div className="text-white text-center mt-10">Loading profile...</div>
@@ -101,17 +182,42 @@ export default function UserSection() {
       {/* Header  */}
       <div className="w-full h-[20%] border-2 border-white rounded-[40px] px-20 py-4">
         <div className="w-full h-full flex flex-row justify-start items-center">
-          <div className="w-22 h-20 rounded-full bg-white overflow-hidden">
-            {profile.profile_picture && (
-              <Image
-                src={profile.profile_picture}
-                alt="Profile"
-                width={80}
-                height={80}
-                className="object-cover w-full h-full"
-              />
-            )}
+          <div className="relative group">
+            <div className="w-22 h-20 rounded-full ring-2 ring-white overflow-hidden">
+              {profile.profile_picture ? (
+                <Image
+                  src={profile.profile_picture}
+                  alt="Profile"
+                  width={80}
+                  height={80}
+                  className="object-cover w-full h-full"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <User className="w-10 h-10 text-white" />
+                </div>
+              )}
+            </div>
+            <button
+              onClick={triggerFileInput}
+              className="absolute bottom-0 right-0 bg-[#2541CD] rounded-full p-2 cursor-pointer"
+              disabled={uploading}
+            >
+              {uploading ? (
+                <span className="loading-spinner"></span>
+              ) : (
+                <Upload className="w-4 h-4 text-white" />
+              )}
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleUpload}
+              accept="image/*"
+              className="hidden"
+            />
           </div>
+
           <div className="w-full h-full flex flex-col justify-center items-start gap-1 pl-[20px]">
             <h1 className="text-white text-[22px] font-[400]">
               {profile.full_name || "No name"}
