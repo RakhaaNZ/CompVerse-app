@@ -4,6 +4,8 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from datetime import timedelta
+from django.conf import settings
+from django.core.exceptions import ValidationError
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
@@ -79,24 +81,56 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return self.full_name
-
-
-class Registration(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    competition = models.ForeignKey(Competition, on_delete=models.CASCADE)
-    registered_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.user.username} - {self.competition.title}"
-
-
+    
 class Team(models.Model):
     name = models.CharField(max_length=255, unique=True)
     competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="teams")
     leader = models.ForeignKey(User, on_delete=models.CASCADE, related_name="led_teams", null=True, blank=True)  
     members = models.ManyToManyField(User, related_name="joined_teams") 
     created_at = models.DateTimeField(auto_now_add=True)
+    is_looking_for_members = models.BooleanField(default=True)
+    
+    # In your api/models.py, modify the clean method
+    def clean(self):
+        # Don't check members count if the team hasn't been saved yet
+        if not self.pk:
+            return
+            
+        if self.members.count() >= self.competition.max_participants:
+            raise ValidationError(
+                f"Team cannot have more than {self.competition.max_participants} members."
+            )
+    
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} - {self.competition.title}"
+    
+class TeamInvite(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, related_name="invites")
+    email = models.EmailField()
+    invited_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sent_invites")
+    accepted = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Invite to {self.email} for team {self.team.name}"
+
+
+class Registration(models.Model):
+    competition = models.ForeignKey(Competition, on_delete=models.CASCADE, related_name="registrations")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="registrations")
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, blank=True, null=True, related_name="registrations")
+    registered_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('competition', 'user')
+
+    def __str__(self):
+        return f"{self.user} -> {self.competition.title}"
+
+
+
 

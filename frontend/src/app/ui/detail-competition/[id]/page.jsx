@@ -9,13 +9,21 @@ import BG from "../../../../../public/competition-assets/detail/bg.png";
 import { Calendar } from "../../../../components/calendar/calendar";
 import { format } from "date-fns";
 import { ChevronDown } from "lucide-react";
+import { supabase } from "../../../../lib/supabaseClient";
+import RegistrationModal from "../../../../components/registration-modal";
 
 export default function DetailCompetition() {
   const [competition, setCompetition] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [checkingRegistration, setCheckingRegistration] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [busy, setBusy] = useState(false);
   const params = useParams();
 
+  // Fetch competition details
   useEffect(() => {
     const fetchCompetitionDetail = async () => {
       try {
@@ -37,6 +45,154 @@ export default function DetailCompetition() {
     fetchCompetitionDetail();
   }, [params.id]);
 
+  // Fetch current user
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken =
+        session?.access_token || localStorage.getItem("access_token");
+      if (!accessToken) {
+        setCheckingRegistration(false);
+        return;
+      }
+      try {
+        const res = await fetch("http://localhost:8000/api/users/", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) setCurrentUser(data[0]);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
+  // Check registration status
+  useEffect(() => {
+    const fetchRegistrationStatus = async () => {
+      if (!competition?.id || !currentUser?.id) {
+        setCheckingRegistration(false);
+        return;
+      }
+
+      setCheckingRegistration(true);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const accessToken =
+          session?.access_token || localStorage.getItem("access_token");
+        const res = await fetch(
+          `http://localhost:8000/api/registrations/?competition=${competition.id}&user=${currentUser.id}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setIsRegistered(Array.isArray(data) && data.length > 0);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setCheckingRegistration(false);
+      }
+    };
+
+    if (competition && currentUser) {
+      fetchRegistrationStatus();
+    }
+  }, [competition?.id, currentUser?.id]);
+
+  const registerIndividual = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      const accessToken =
+        session?.access_token || localStorage.getItem("access_token");
+
+      const res = await fetch("http://localhost:8000/api/registrations/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          competition_id: competition.id,
+        }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        console.error("Registration error:", errData);
+        throw new Error(
+          errData.detail || errData.error || "Registration failed"
+        );
+      }
+
+      const data = await res.json();
+      console.log("Registration success:", data);
+
+      setIsRegistered(true);
+      alert("Registered successfully!");
+    } catch (err) {
+      console.error("Registration failed:", err);
+      alert(err.message || "Registration failed. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRegisterClick = () => {
+    if (checkingRegistration || busy) return;
+    if (isRegistered) return;
+
+    if ((competition.type || "").toLowerCase() === "team") {
+      setShowModal(true);
+    } else {
+      registerIndividual();
+    }
+  };
+
+  const startDate = competition?.start_date
+    ? format(new Date(competition.start_date), "dd MMM yyyy")
+    : "N/A";
+
+  const endDate = competition?.end_date
+    ? format(new Date(competition.end_date), "dd MMM yyyy")
+    : "N/A";
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return { date: "N/A", time: "N/A" };
+
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return { date: "Invalid date", time: "Invalid date" };
+      }
+      return {
+        date: format(date, "dd MMM yyyy"),
+        time: format(date, "HH:mm"),
+      };
+    } catch (err) {
+      console.error("Error formatting date:", err);
+      return { date: "Error", time: "Error" };
+    }
+  };
+
+  const { date: closeRegDate, time: closeRegTime } = formatDateTime(
+    competition?.close_registration
+  );
+
+  const isRegistrationClosed = competition?.close_registration
+    ? new Date(competition.close_registration) < new Date()
+    : true;
+
   if (loading)
     return (
       <div className="w-screen h-screen flex justify-center items-center text-white text-center py-20">
@@ -55,23 +211,6 @@ export default function DetailCompetition() {
         Competition not found
       </div>
     );
-
-  const startDate = format(new Date(competition.start_date), "dd MMM yyyy");
-  const endDate = format(new Date(competition.end_date), "dd MMM yyyy");
-
-  const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return {
-      date: format(date, "dd MMM yyyy"),
-      time: format(date, "HH:mm"),
-    };
-  };
-  const { date: closeRegDate, time: closeRegTime } = formatDateTime(
-    competition.close_registration
-  );
-
-  const isRegistrationClosed =
-    new Date(competition.close_registration) < new Date();
 
   return (
     <section
@@ -243,7 +382,7 @@ export default function DetailCompetition() {
                 </div>
               </div>
 
-              <div className="relative w-full h-[60px] md:h-[80px] flex justify-center items-center rounded-[40px]">
+              <div className="relative w-full h-[60px] md:h-[80px] flex justify-center items-center ring-2 ring-white rounded-[40px] hover:scale-95 transition-all duration-300">
                 <div className="z-0 absolute top-0 left-0 w-full h-full">
                   <Image
                     src={BG}
@@ -254,24 +393,32 @@ export default function DetailCompetition() {
 
                 <div className="w-full h-full rounded-[36px] flex justify-center items-center">
                   {isRegistrationClosed ? (
-                    <div
-                      className="z-10 w-full h-full rounded-[36px] text-[12px] md:text-[20px] font-[400] flex justify-center items-center bg-gray-700 text-gray-400 ring-2 ring-gray-500 cursor-not-allowed"
-                      disabled={
-                        isRegistrationClosed || competition.status !== "open"
-                      }
-                    >
+                    <div className="z-10 w-full h-full rounded-[36px] text-[12px] md:text-[20px] font-[400] flex justify-center items-center bg-gray-700 text-gray-400 ring-2 ring-gray-500 cursor-not-allowed">
                       <h1>Registration Closed</h1>
                     </div>
                   ) : (
-                    <Link
-                      href={`/register-competition/${params.id}`}
-                      className="z-10 w-full h-full rounded-[36px] text-[12px] md:text-[20px] font-[400] flex justify-center items-center transition-all duration-300 cursor-pointer text-white ring-2 ring-white hover:ring-[#2541CD] transition-all duration-300 ease-in-out hover:shadow-[0_0_15px_#2541CD] hover:scale-99"
+                    <button
+                      onClick={handleRegisterClick}
+                      className={`z-10 w-full h-full rounded-[36px] text-[12px] md:text-[20px] font-[400] flex justify-center items-center transition-all duration-300 ${
+                        isRegistered
+                          ? "bg-green-600 text-white ring-2 ring-green-600"
+                          : "cursor-pointer text-white"
+                      }`}
                       disabled={
-                        isRegistrationClosed || competition.status !== "open"
+                        isRegistrationClosed ||
+                        checkingRegistration ||
+                        busy ||
+                        isRegistered
                       }
                     >
-                      <h1>Registration Now</h1>
-                    </Link>
+                      {checkingRegistration
+                        ? "Checking..."
+                        : busy
+                        ? "Processing..."
+                        : isRegistered
+                        ? "Already Registered"
+                        : "Register Now"}
+                    </button>
                   )}
                 </div>
               </div>
@@ -279,6 +426,17 @@ export default function DetailCompetition() {
           </div>
         </div>
       </div>
+
+      {showModal && (
+        <RegistrationModal
+          competition={competition}
+          onClose={() => setShowModal(false)}
+          onRegistered={() => {
+            setShowModal(false);
+            setIsRegistered(true);
+          }}
+        />
+      )}
     </section>
   );
 }

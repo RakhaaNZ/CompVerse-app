@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { Upload, User } from "lucide-react";
 import { supabase } from "../../../lib/supabaseClient";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function UserCompetition() {
   const [profile, setProfile] = useState(null);
@@ -267,6 +268,13 @@ export default function UserCompetition() {
                           ) : (
                             <span>No members</span>
                           )}
+                        </div>
+                        <div>
+                          <Link href={`/team/${team.id}`}>
+                            <button className="bg-[#2541CD] text-white px-4 py-2 rounded hover:bg-blue-800 rounded-[12px] cursor-pointer">
+                              See Detail Team
+                            </button>
+                          </Link>
                         </div>
                       </div>
                     </div>

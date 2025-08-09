@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Competition, UserProfile, Registration, Team
+from .models import Competition, UserProfile, Registration, Team, TeamInvite
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.core.exceptions import ObjectDoesNotExist
@@ -137,12 +137,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             'institution_company',
             'profile_picture'
         ]
-
-class RegistrationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Registration
-        fields = '__all__'
-
+        
 class TeamSerializer(serializers.ModelSerializer):
     competition = CompetitionSerializer()
     leader = UserSerializer()
@@ -155,6 +150,72 @@ class TeamSerializer(serializers.ModelSerializer):
         if Team.objects.filter(name=value).exists():
             raise serializers.ValidationError("The team name is already in use.")
         return value
+
+class RegistrationSerializer(serializers.ModelSerializer):
+    competition = CompetitionSerializer(read_only=True)
+    team = TeamSerializer(read_only=True)
+    class Meta:
+        model = Registration
+        fields = ["competition", "team", "registered_at"]
+        read_only_fields = ["registered_at"]
+
+        competition_id = serializers.IntegerField(write_only=True)
+        team_id = serializers.IntegerField(write_only=True)
+
+    def create(self, validated_data):
+        competition_id = validated_data.pop("competition_id")
+        team_id = validated_data.pop("team_id")
+
+        competition = Competition.objects.get(id=competition_id)
+        team = Team.objects.get(id=team_id)
+
+        # Validasi kalau tim bukan untuk kompetisi lain
+        if team.competition_id != competition.id:
+            raise serializers.ValidationError("Team does not belong to this competition.")
+
+        registration, created = Registration.objects.get_or_create(
+            competition=competition,
+            team=team
+        )
+        return registration
+
+
+    
+class TeamInviteSerializer(serializers.ModelSerializer):
+    invited_by_name = serializers.CharField(source="invited_by.username", read_only=True)
+    team_name = serializers.CharField(source="team.name", read_only=True)
+
+    class Meta:
+        model = TeamInvite
+        fields = ["id", "team", "team_name", "email", "invited_by", "invited_by_name", "accepted", "created_at"]
+        read_only_fields = ["accepted", "created_at", "invited_by"]
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        validated_data["invited_by"] = request.user
+        return super().create(validated_data)
+    
+class TeamMemberSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    profile_picture = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'full_name', 'profile_picture']
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+
+    def get_profile_picture(self, obj):
+        try:
+            return obj.userprofile.profile_picture
+        except UserProfile.DoesNotExist:
+            return None
+
+class TeamDetailSerializer(TeamSerializer):
+    members = TeamMemberSerializer(many=True, read_only=True)
+    leader = TeamMemberSerializer(read_only=True)
+    competition = CompetitionSerializer(read_only=True)
 
 class JoinTeamSerializer(serializers.Serializer):
     team_id = serializers.IntegerField()

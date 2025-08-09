@@ -205,7 +205,7 @@ const Navbar = () => {
                 {profile.profile_picture ? (
                   <div className="w-11 h-11 rounded-full ring-2 ring-white hover:ring-[#2541CD] overflow-hidden">
                     <Image
-                      src={profile.profile_picture}
+                      src={profile.profile_picture || "test"}
                       alt="Profile"
                       width={30}
                       height={30}
