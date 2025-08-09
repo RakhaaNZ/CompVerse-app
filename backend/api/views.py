@@ -78,7 +78,6 @@ class CompetitionViewSet(viewsets.ModelViewSet):
             
         return queryset
 
-# Config Supabase
 supabase: Client = create_client(
     os.getenv('SUPABASE_URL'),
     os.getenv('SUPABASE_KEY')
@@ -149,7 +148,7 @@ class RegistrationViewSet(viewsets.ModelViewSet):
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
-    # permission_classes = [permissions.IsAuthenticated] 
+    permission_classes = [permissions.IsAuthenticated] 
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['competition']
     search_fields = ['name']
@@ -173,7 +172,7 @@ class TeamViewSet(viewsets.ModelViewSet):
 
 
 class RegisterCompetitionView(APIView):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
         """
@@ -259,7 +258,28 @@ class JoinTeamView(APIView):
 
         team.members.add(user)
         return Response({"message": "Berhasil bergabung ke tim."}, status=status.HTTP_200_OK)
+    
+class MyCompetitionsView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        registrations = Registration.objects.filter(user=request.user)
+        competitions = [r.competition for r in registrations]
+        serializer = CompetitionSerializer(competitions, many=True)
+        return Response(serializer.data)
+    
+class MyTeamsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        led_teams = Team.objects.filter(leader=user)
+        joined_teams = Team.objects.filter(members=user).exclude(leader=user)
+
+        all_teams = led_teams.union(joined_teams)
+
+        serializer = TeamSerializer(all_teams, many=True)
+        return Response(serializer.data)
 
 
 @api_view(['GET'])

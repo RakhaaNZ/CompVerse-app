@@ -203,7 +203,7 @@ const Navbar = () => {
                 className="text-white hover:text-[#2541CD] transition duration-300 ease-in-out"
               >
                 {profile.profile_picture ? (
-                  <div className="w-11 h-11 rounded-full ring-2 ring-white overflow-hidden">
+                  <div className="w-11 h-11 rounded-full ring-2 ring-white hover:ring-[#2541CD] overflow-hidden">
                     <Image
                       src={profile.profile_picture}
                       alt="Profile"

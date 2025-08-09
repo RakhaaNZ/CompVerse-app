@@ -144,7 +144,9 @@ class RegistrationSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class TeamSerializer(serializers.ModelSerializer):
-    members = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), many=True)
+    competition = CompetitionSerializer()
+    leader = UserSerializer()
+    members = UserSerializer(many=True)
     class Meta:
         model = Team
         fields = '__all__'

@@ -28,8 +28,15 @@ export default function CompetitionPage() {
     const loadCompetitions = async () => {
       try {
         const data = await fetchCompetitions();
-        setCompetitions(data);
-        setFilteredCompetitions(data);
+
+        const today = new Date();
+        const filteredByDate = data.filter((comp) => {
+          const endDate = new Date(comp.end_date);
+          return endDate >= today;
+        });
+
+        setCompetitions(filteredByDate);
+        setFilteredCompetitions(filteredByDate);
       } catch (err) {
         setError(err.message);
       } finally {

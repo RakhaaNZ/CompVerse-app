@@ -178,12 +178,12 @@ export default function UserSection() {
   }
 
   return (
-    <div className="w-full h-full relative flex flex-col gap-10 justify-center items-center">
+    <div className="w-full h-full min-h-[820px] flex flex-col gap-5 xl:gap-15 justify-center items-center">
       {/* Header  */}
-      <div className="w-full h-[20%] border-2 border-white rounded-[40px] px-20 py-4">
-        <div className="w-full h-full flex flex-row justify-start items-center">
+      <div className="w-full h-[180px] md:h-[200px] border-2 border-white rounded-[26px] md:rounded-[40px] px-20 py-4 flex justify-start items-center">
+        <div className="w-full h-full flex flex-col md:flex-row justify-start items-center">
           <div className="relative group">
-            <div className="w-22 h-20 rounded-full ring-2 ring-white overflow-hidden">
+            <div className="w-18 md:w-22 h-18 md:h-20 rounded-full ring-2 ring-white overflow-hidden">
               {profile.profile_picture ? (
                 <Image
                   src={profile.profile_picture}
@@ -218,11 +218,11 @@ export default function UserSection() {
             />
           </div>
 
-          <div className="w-full h-full flex flex-col justify-center items-start gap-1 pl-[20px]">
-            <h1 className="text-white text-[22px] font-[400]">
+          <div className="w-full h-full flex flex-col justify-center items-center md:items-start gap-1 pl-0 md:pl-[20px]">
+            <h1 className="text-white text-[18px] md:text-[22px] font-[400]">
               {profile.full_name || "No name"}
             </h1>
-            <p className="text-white/80 text-[18px] font-[400]">
+            <p className="text-white/80 text-[14px] md:text-[18px] font-[400]">
               {profile.email || "No email"}
             </p>
           </div>
@@ -230,8 +230,8 @@ export default function UserSection() {
       </div>
 
       {/* Details */}
-      <div className="w-full h-[80%] border-2 border-white rounded-[40px] flex flex-row justify-center items-center gap-25 p-15">
-        <div className="w-[50%] h-full flex flex-col gap-6">
+      <div className="w-full h-full border-2 border-white rounded-[26px] md:rounded-[40px] flex flex-col lg:flex-row justify-center items-center md:items-start gap-6 lg:gap-25 p-6 md:p-15">
+        <div className="w-full lg:w-[50%] h-full flex flex-col gap-6">
           {[
             {
               field: "first_name",
@@ -262,7 +262,7 @@ export default function UserSection() {
           ))}
         </div>
 
-        <div className="w-[50%] h-full flex flex-col gap-6">
+        <div className="w-full lg:w-[50%] h-full flex flex-col gap-6">
           {[
             { field: "location", label: "Location", value: profile.location },
             {
@@ -312,23 +312,25 @@ function ProfileField({
 
   return (
     <div className="w-full h-auto flex flex-col gap-2">
-      <h1 className="text-white text-[22px] font-[400]">{label}</h1>
-      <div className="w-full h-[50px] flex flex-row justify-between items-center px-6 py-2 ring-white ring-2 rounded-[20px]">
+      <h1 className="text-white text-[14px] md:text-[22px] font-[400]">
+        {label}
+      </h1>
+      <div className="w-full h-[40px] md:h-[50px] flex flex-row justify-between items-center px-6 py-2 ring-white ring-1 md:ring-2 rounded-[16px] md:rounded-[20px]">
         {isEditing ? (
           <input
             type={field === "age" ? "number" : "text"}
             value={editValue}
             onChange={(e) => onEditChange(e.target.value)}
-            className="flex-1 bg-transparent text-white/80 text-[18px] font-[400] outline-none"
+            className="flex-1 bg-transparent text-white/80 text-[12px] md:text-[18px] font-[400] outline-none"
             autoFocus
           />
         ) : (
-          <h1 className="text-white/80 text-[18px] font-[400]">
+          <h1 className="text-white/80 text-[12px] md:text-[18px] font-[400]">
             {value || "-"}
           </h1>
         )}
         <div className="w-[50px] h-full flex flex-row justify-end items-center">
-          <div className="w-[2px] h-full bg-white"></div>
+          <div className="w-[1px] md:w-[2px] h-[90%] md:h-full bg-white"></div>
           {isEditing ? (
             <div className="flex gap-2 ml-2">
               <button
@@ -351,7 +353,7 @@ function ProfileField({
               onClick={() => onEditClick(field, value)}
               className="cursor-pointer w-full h-full flex justify-end"
             >
-              <Pencil className="w-[25px] h-auto text-white" />
+              <Pencil className="w-[15px] md:w-[25px] h-auto text-white" />
             </button>
           )}
         </div>
