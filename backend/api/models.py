@@ -23,6 +23,7 @@ class Competition(models.Model):
     max_participants = models.IntegerField()
     is_team_based = models.BooleanField(default=False)
     poster_competition = models.URLField(max_length=500, blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)
     
     COMPETITION_TYPES = [
         ('Individual', 'Individual'),
@@ -90,9 +91,7 @@ class Team(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_looking_for_members = models.BooleanField(default=True)
     
-    # In your api/models.py, modify the clean method
     def clean(self):
-        # Don't check members count if the team hasn't been saved yet
         if not self.pk:
             return
             

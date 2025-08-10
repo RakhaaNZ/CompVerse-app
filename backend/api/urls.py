@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from api.views import (
-    CompetitionViewSet, UserProfileViewSet, RegistrationViewSet, TeamViewSet, RegisterUserView, RegisterCompetitionView, CreateTeamView, JoinTeamView, EmailTokenObtainPairView, UploadCompetitionPosterView, MyCompetitionsView, MyTeamsView, TeamInviteViewSet
+    CompetitionViewSet, UserProfileViewSet, RegistrationViewSet, TeamViewSet, RegisterUserView, RegisterCompetitionView, CreateTeamView, JoinTeamView, EmailTokenObtainPairView, UploadCompetitionPosterView, MyCompetitionsView, MyTeamsView, TeamInviteViewSet, AnalyticsView
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -32,4 +32,5 @@ urlpatterns = [
     path('my-competitions/', MyCompetitionsView.as_view(), name='my-competitions'),
     path('my-teams/', MyTeamsView.as_view(), name='my-teams'),
 
+    path('analytics/', AnalyticsView.as_view(), name='analytics'),
 ]

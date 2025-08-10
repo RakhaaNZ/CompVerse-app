@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render,  get_object_or_404
 from rest_framework import viewsets, permissions, generics,status
 from .models import Competition, UserProfile, Registration, Team, TeamInvite
 from .serializers import CompetitionSerializer, UserProfileSerializer, RegistrationSerializer, TeamSerializer, UserSerializer, TeamInviteSerializer, JoinTeamSerializer, ParticipantSerializer, EmailTokenObtainPairSerializer
@@ -10,14 +10,17 @@ from rest_framework.views import APIView
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import action, api_view, permission_classes
-from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework.parsers import MultiPartParser
-import uuid
 from datetime import datetime
 from supabase import create_client, Client
-import os
 from django.db import models
+from rest_framework.permissions import BasePermission, SAFE_METHODS
+import os, uuid
+from django.contrib.auth import get_user_model
+from django.db.models.functions import TruncDate
+from django.db.models import Count
+from datetime import timedelta, date
 
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
@@ -142,18 +145,15 @@ class RegistrationViewSet(viewsets.ModelViewSet):
         competition_id = request.data.get("competition_id")
         team_id = request.data.get("team_id")
 
-        # Cek competition
         try:
             competition = Competition.objects.get(id=competition_id)
         except Competition.DoesNotExist:
             return Response({"error": "Competition not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Cek sudah terdaftar atau belum
         if Registration.objects.filter(competition=competition, user=user).exists():
             return Response({"error": "You are already registered for this competition"},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        # Kalau team-based
         if competition.is_team_based:
             if not team_id:
                 return Response({"error": "Team ID is required for team-based competitions"},
@@ -227,21 +227,18 @@ class TeamViewSet(viewsets.ModelViewSet):
         team = self.get_object()
         user = request.user
 
-        # Cek apakah user sudah menjadi anggota tim
         if team.members.filter(id=user.id).exists():
             return Response(
                 {'detail': 'Anda sudah tergabung dalam tim ini.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-        # Cek apakah tim masih menerima anggota
+            
         if not team.is_looking_for_members:
             return Response(
                 {"error": "Tim ini sudah tidak menerima anggota baru"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Cek batas maksimal anggota
         max_participants = team.competition.max_participants
         if team.members.count() >= max_participants:
             return Response(
@@ -249,10 +246,8 @@ class TeamViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Tambahkan user ke tim
         team.members.add(user)
 
-        # Buat registrasi kompetisi untuk user
         Registration.objects.get_or_create(
             competition=team.competition,
             user=user,
@@ -272,9 +267,6 @@ class TeamViewSet(viewsets.ModelViewSet):
         team = self.get_object()
         user = request.user
         
-        
-        
-        # Cek apakah user adalah leader tim
         if request.user.id != team.leader.id:
             return Response(
                 {"error": "Only team leader can add members"},
@@ -296,14 +288,12 @@ class TeamViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Cek apakah user sudah menjadi member
         if team.members.filter(id=user_to_add.id).exists():
             return Response(
                 {"error": "User is already a member of this team"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Cek batas maksimal member
         max_participants = team.competition.max_participants
         if team.members.count() >= max_participants:
             return Response(
@@ -317,7 +307,6 @@ class TeamViewSet(viewsets.ModelViewSet):
             status=status.HTTP_200_OK
         )
         
-        # Daftarkan member ke competition
         registration, created = Registration.objects.get_or_create(
             competition=team.competition,
             user=user_to_add,
@@ -344,7 +333,6 @@ class TeamViewSet(viewsets.ModelViewSet):
         team = self.get_object()
         user = request.user
         
-        # Cek apakah user adalah leader tim
         if team.leader != user:
             return Response(
                 {"error": "Only team leader can remove members"},
@@ -359,14 +347,12 @@ class TeamViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # Cek apakah user adalah member tim
         if not team.members.filter(id=member_id).exists():
             return Response(
                 {"error": "User is not a member of this team"},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Leader tidak bisa menghapus diri sendiri
         if member_id == user.id:
             return Response(
                 {"error": "Leader cannot remove themselves from the team"},
@@ -435,11 +421,9 @@ class RegisterCompetitionView(APIView):
         except Team.DoesNotExist:
             return Response({"error": "Team not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Pastikan user adalah leader tim
         if team.leader != request.user:
             return Response({"error": "You are not the leader of this team."}, status=status.HTTP_403_FORBIDDEN)
 
-        # Pastikan tim ikut kompetisi yang sama
         if team.competition_id != competition.id:
             return Response({"error": "Team is not for this competition."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -498,13 +482,10 @@ class MyCompetitionsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        # Dapatkan kompetisi dimana user terdaftar secara langsung
         direct_registrations = Registration.objects.filter(user=request.user)
         
-        # Dapatkan kompetisi dimana user terdaftar melalui tim
         team_registrations = Registration.objects.filter(team__members=request.user)
         
-        # Gabungkan dan ambil kompetisi unik
         all_registrations = (direct_registrations | team_registrations).distinct()
         competitions = [r.competition for r in all_registrations]
         
@@ -541,3 +522,38 @@ def admin_dashboard(request):
         "total_registrations": total_registrations,
     }
     return Response(data)
+
+class AnalyticsView(APIView):
+    def get(self, request):
+        today = date.today()
+        start_date = today - timedelta(days=30)
+
+        user_counts = (
+            User.objects.filter(date_joined__date__gte=start_date)
+            .annotate(date=TruncDate('date_joined'))
+            .values('date')
+            .annotate(user=Count('id'))
+        )
+
+        post_counts = (
+            Competition.objects.filter(created_at__date__gte=start_date)
+            .annotate(date=TruncDate('created_at'))
+            .values('date')
+            .annotate(post=Count('id'))
+        )
+
+        combined = {}
+        for u in user_counts:
+            combined[u['date']] = {'date': u['date'], 'user': u['user'], 'post': 0}
+        for p in post_counts:
+            if p['date'] in combined:
+                combined[p['date']]['post'] = p['post']
+            else:
+                combined[p['date']] = {'date': p['date'], 'user': 0, 'post': p['post']}
+
+        result = sorted(combined.values(), key=lambda x: x['date'])
+
+        for r in result:
+            r['date'] = r['date'].isoformat()
+
+        return Response(result)

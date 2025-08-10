@@ -168,8 +168,8 @@ const Navbar = () => {
         {/* Desktop */}
         <div className="hidden lg:flex h-full flex-row justify-center gap-18 items-center px-[100px] text-[24px] font-[400]">
           {[
-            { name: "Competition", href: "#competition" },
-            { name: "Team’s", href: "#teams" },
+            { name: "Competition", href: "/ui/home#competition" },
+            { name: "Team’s", href: "/ui/teams" },
           ].map((item, index) => (
             <Link key={index} href={item.href} className="relative group">
               <h1 className="w-full transition-all duration-300 ease-in-out group-hover:scale-110 group-hover:bg-gradient-to-r from-[#2541CD] via-[#fff] to-[#2541CD] group-hover:text-transparent group-hover:bg-clip-text text-[20px] xl:text-[22px] text-base text-white leading-[1]">
@@ -205,7 +205,7 @@ const Navbar = () => {
                 {profile.profile_picture ? (
                   <div className="w-11 h-11 rounded-full ring-2 ring-white hover:ring-[#2541CD] overflow-hidden">
                     <Image
-                      src={profile.profile_picture || "test"}
+                      src={profile.profile_picture}
                       alt="Profile"
                       width={30}
                       height={30}

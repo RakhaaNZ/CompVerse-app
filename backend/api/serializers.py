@@ -3,6 +3,7 @@ from .models import Competition, UserProfile, Registration, Team, TeamInvite
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.core.exceptions import ObjectDoesNotExist
+from django.utils import timezone
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -100,14 +101,12 @@ class CompetitionSerializer(serializers.ModelSerializer):
         return value
 
     def validate_end_date(self, value):
-        from datetime import datetime
-        if value < datetime.now():
+        if value < timezone.now():
             raise serializers.ValidationError("The end date must be in the future.")
         return value
-    
+
     def validate_close_registration(self, value):
-        from datetime import datetime
-        if value < datetime.now():
+        if value < timezone.now():
             raise serializers.ValidationError("Close registration date must be in the future.")
         return value
     
@@ -169,7 +168,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
         competition = Competition.objects.get(id=competition_id)
         team = Team.objects.get(id=team_id)
 
-        # Validasi kalau tim bukan untuk kompetisi lain
         if team.competition_id != competition.id:
             raise serializers.ValidationError("Team does not belong to this competition.")
 
@@ -178,8 +176,6 @@ class RegistrationSerializer(serializers.ModelSerializer):
             team=team
         )
         return registration
-
-
     
 class TeamInviteSerializer(serializers.ModelSerializer):
     invited_by_name = serializers.CharField(source="invited_by.username", read_only=True)

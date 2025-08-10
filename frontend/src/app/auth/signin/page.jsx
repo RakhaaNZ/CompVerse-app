@@ -36,7 +36,11 @@ export default function SignInForm({ toggle }) {
       localStorage.setItem("access_token", data.access);
       localStorage.setItem("refresh_token", data.refresh);
 
-      router.push("/ui/home");
+      if (email === "admin@gmail.com") {
+        router.push("/dashboard");
+      } else {
+        router.push("/");
+      }
     } catch (err) {
       setError(err.message);
     } finally {

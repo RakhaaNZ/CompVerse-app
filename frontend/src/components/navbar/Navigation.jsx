@@ -24,8 +24,8 @@ export const Navigation = ({ isOpen, closeSidebar }) => {
   }, [isOpen]);
 
   const menuItems = [
-    { label: "Competition", link: "#competition" },
-    { label: "Team’s Up", link: "#teams" },
+    { label: "Competition", link: "/ui/home#competition" },
+    { label: "Teams", link: "/ui/teams" },
   ];
   const MenuButtons = [
     { label: "Sign In", link: "/auth" },
