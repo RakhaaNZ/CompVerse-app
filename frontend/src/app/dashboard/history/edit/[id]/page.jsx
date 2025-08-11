@@ -1,23 +1,23 @@
-"use client";
+"use client"
 
-import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
-import { Button } from "../../../../ui/button";
-import { createClient } from "@supabase/supabase-js";
+import { useEffect, useState, useRef } from "react"
+import { useParams } from "next/navigation"
+import { Button } from "../../../../ui/button"
+import { createClient } from "@supabase/supabase-js"
 
 // Initialize Supabase
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-);
+)
 
 export default function EditCompetitionPage() {
-  const params = useParams();
-  const id = params?.id;
-  const fileInputRef = useRef(null);
-  const [uploading, setUploading] = useState(false);
-  const [imagePreview, setImagePreview] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const params = useParams()
+  const id = params?.id
+  const fileInputRef = useRef(null)
+  const [uploading, setUploading] = useState(false)
+  const [imagePreview, setImagePreview] = useState("")
+  const [isSaving, setIsSaving] = useState(false)
 
   const [formData, setFormData] = useState({
     title: "",
@@ -31,11 +31,11 @@ export default function EditCompetitionPage() {
     description: "",
     poster: null,
     poster_competition: "",
-  });
+  })
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem("access_token");
+      const token = localStorage.getItem("access_token")
       try {
         const res = await fetch(
           `http://127.0.0.1:8000/api/competitions/${id}/`,
@@ -44,107 +44,111 @@ export default function EditCompetitionPage() {
               Authorization: `Bearer ${token}`,
             },
           }
-        );
+        )
 
-        if (!res.ok) throw new Error("Failed to fetch competition data");
+        if (!res.ok) throw new Error("Failed to fetch competition data")
 
-        const data = await res.json();
+        const data = await res.json()
 
         setFormData({
           ...data,
           is_team_based: data.is_team_based?.toString(),
           poster: null,
           poster_competition: data.poster_competition || "",
-        });
+        })
       } catch (error) {
-        console.error(error);
-        alert(error.message);
+        console.error(error)
+        alert(error.message)
       }
-    };
+    }
 
-    if (id) fetchData();
-  }, [id]);
+    if (id) fetchData()
+  }, [id])
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+    const { name, value } = e.target
+    setFormData((prev) => ({ ...prev, [name]: value }))
+  }
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files[0]
     if (file) {
-      // Create preview URL
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
+      const previewUrl = URL.createObjectURL(file)
+      setImagePreview(previewUrl)
 
-      // Update form data
       setFormData((prev) => ({
         ...prev,
         poster: file,
-      }));
+      }))
     }
-  };
+    const { name, value } = e.target
+
+    if (name === "type") {
+      setFormData((prev) => ({
+        ...prev,
+        type: value,
+        is_team_based: value === "Team" ? "true" : "false",
+      }))
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }))
+    }
+  }
 
   const handleUpload = async () => {
-    if (!formData.poster) return;
+    if (!formData.poster) return
 
-    setUploading(true);
+    setUploading(true)
 
     try {
-      const file = formData.poster;
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `competition-posters/${fileName}`;
+      const file = formData.poster
+      const fileExt = file.name.split(".").pop()
+      const fileName = `${Date.now()}.${fileExt}`
+      const filePath = `competition-posters/${fileName}`
 
-      // Upload to Supabase
       const { error: uploadError } = await supabase.storage
         .from("competition-posters")
         .upload(filePath, file, {
           cacheControl: "3600",
           upsert: true,
           contentType: file.type,
-        });
+        })
 
-      if (uploadError) throw uploadError;
+      if (uploadError) throw uploadError
 
-      // Get public URL
       const {
         data: { publicUrl },
-      } = supabase.storage.from("competition-posters").getPublicUrl(filePath);
+      } = supabase.storage.from("competition-posters").getPublicUrl(filePath)
 
-      // Update form data with new URL
       setFormData((prev) => ({
         ...prev,
         poster_competition: `${publicUrl}?t=${Date.now()}`,
         poster: null,
-      }));
+      }))
 
-      // Clear preview
-      setImagePreview("");
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setImagePreview("")
+      if (fileInputRef.current) fileInputRef.current.value = ""
 
-      alert("Image uploaded successfully!");
+      alert("Image uploaded successfully!")
     } catch (error) {
-      console.error("Upload error:", error);
-      alert(`Upload failed: ${error.message}`);
+      console.error("Upload error:", error)
+      alert(`Upload failed: ${error.message}`)
     } finally {
-      setUploading(false);
+      setUploading(false)
     }
-  };
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSaving(true);
+    e.preventDefault()
+    setIsSaving(true)
 
-    const token = localStorage.getItem("access_token");
-    const formDataToSend = new FormData();
+    const token = localStorage.getItem("access_token")
+    const formDataToSend = new FormData()
 
-    // Append all form data except poster (we already have poster_competition URL)
     Object.keys(formData).forEach((key) => {
       if (key !== "poster" && formData[key] !== null) {
-        formDataToSend.append(key, formData[key]);
+        formDataToSend.append(key, formData[key])
       }
-    });
+    })
 
     try {
       const res = await fetch(`http://127.0.0.1:8000/api/competitions/${id}/`, {
@@ -153,38 +157,36 @@ export default function EditCompetitionPage() {
           Authorization: `Bearer ${token}`,
         },
         body: formDataToSend,
-      });
+      })
 
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to update competition");
+        const errorData = await res.json()
+        throw new Error(errorData.message || "Failed to update competition")
       }
 
-      const updatedData = await res.json();
+      const updatedData = await res.json()
 
-      // Update form data with the response
       setFormData((prev) => ({
         ...prev,
         ...updatedData,
         poster: null,
         poster_competition: updatedData.poster_competition || "",
         is_team_based: updatedData.is_team_based?.toString(),
-      }));
+      }))
 
-      window.location.href = "/dashboard/history";
+      window.location.href = "/dashboard/history"
 
-      alert("Competition updated successfully!");
+      alert("Competition updated successfully!")
     } catch (error) {
-      console.error(error);
-      alert(error.message);
+      console.error(error)
+      alert(error.message)
     } finally {
-      setIsSaving(false);
+      setIsSaving(false)
     }
-  };
+  }
 
   return (
     <div className="flex flex-col md:flex-row gap-8 p-6 max-w-6xl h-auto bg-gradient-to-tl from-blue-500">
-      {/* Card Preview */}
       <div className="md:w-1/2 w-full bg-white border rounded-xl shadow p-4">
         <div className="">
           <img
@@ -215,7 +217,6 @@ export default function EditCompetitionPage() {
         </p>
       </div>
 
-      {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-5 w-full md:w-1/2">
         {[
           { label: "Title", name: "title", type: "text" },
@@ -279,21 +280,6 @@ export default function EditCompetitionPage() {
         </div>
 
         <div>
-          <label className="block mb-1 font-medium">Team Based?</label>
-          <select
-            name="is_team_based"
-            value={formData.is_team_based}
-            onChange={handleChange}
-            required
-            className="w-full border px-3 py-2 rounded"
-          >
-            <option value="">Select Option</option>
-            <option value="true">Yes (Team)</option>
-            <option value="false">No (Individual)</option>
-          </select>
-        </div>
-
-        <div>
           <label className="block mb-1 font-medium">Description</label>
           <textarea
             name="description"
@@ -335,5 +321,5 @@ export default function EditCompetitionPage() {
         </Button>
       </form>
     </div>
-  );
+  )
 }

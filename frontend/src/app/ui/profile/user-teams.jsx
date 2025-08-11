@@ -1,70 +1,70 @@
-"use client";
+"use client"
 
-import { useEffect, useState, useRef } from "react";
-import { Upload, User } from "lucide-react";
-import { supabase } from "../../../lib/supabaseClient";
-import Image from "next/image";
-import Link from "next/link";
+import { useEffect, useState, useRef } from "react"
+import { Upload, User } from "lucide-react"
+import { supabase } from "../../../lib/supabaseClient"
+import Image from "next/image"
+import Link from "next/link"
 
 export default function UserCompetition() {
-  const [profile, setProfile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef(null);
-  const [teams, setTeams] = useState([]);
+  const [profile, setProfile] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef(null)
+  const [teams, setTeams] = useState([])
 
   useEffect(() => {
     const fetchProfile = async () => {
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } = await supabase.auth.getSession()
       const accessToken =
-        session?.access_token || localStorage.getItem("access_token");
+        session?.access_token || localStorage.getItem("access_token")
 
-      if (!accessToken) return;
+      if (!accessToken) return
 
       try {
         const res = await fetch("http://localhost:8000/api/users/", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
-        });
+        })
 
-        const data = await res.json();
+        const data = await res.json()
         if (Array.isArray(data) && data.length > 0) {
-          setProfile(data[0]);
+          setProfile(data[0])
         }
       } catch (error) {
-        console.error("Failed to fetch profile:", error);
+        console.error("Failed to fetch profile:", error)
       }
-    };
+    }
 
-    fetchProfile();
-  }, []);
+    fetchProfile()
+  }, [])
 
   const handleUpload = async (event) => {
     try {
-      setUploading(true);
-      const file = event.target.files[0];
-      if (!file) return;
+      setUploading(true)
+      const file = event.target.files[0]
+      if (!file) return
 
       const {
         data: { session },
-      } = await supabase.auth.getSession();
+      } = await supabase.auth.getSession()
       const accessToken =
-        session?.access_token || localStorage.getItem("access_token");
+        session?.access_token || localStorage.getItem("access_token")
 
       if (!accessToken) {
-        throw new Error("Session expired. Please sign in again");
+        throw new Error("Session expired. Please sign in again")
       }
 
-      const validTypes = ["image/jpeg", "image/png", "image/webp"];
+      const validTypes = ["image/jpeg", "image/png", "image/webp"]
       if (!validTypes.includes(file.type)) {
-        throw new Error("Hanya file JPEG, PNG, atau WEBP yang diperbolehkan");
+        throw new Error("Hanya file JPEG, PNG, atau WEBP yang diperbolehkan")
       }
 
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `user-uploads/${fileName}`;
+      const fileExt = file.name.split(".").pop()
+      const fileName = `${Date.now()}.${fileExt}`
+      const filePath = `user-uploads/${fileName}`
 
       const { error: uploadError } = await supabase.storage
         .from("profile-pictures")
@@ -72,18 +72,18 @@ export default function UserCompetition() {
           cacheControl: "3600",
           upsert: false,
           contentType: file.type,
-        });
+        })
 
       if (uploadError) {
-        console.error("Upload error details:", uploadError);
-        throw new Error(uploadError.message || "Failed to upload image");
+        console.error("Upload error details:", uploadError)
+        throw new Error(uploadError.message || "Failed to upload image")
       }
 
       const {
         data: { publicUrl },
-      } = supabase.storage.from("profile-pictures").getPublicUrl(filePath);
+      } = supabase.storage.from("profile-pictures").getPublicUrl(filePath)
 
-      console.log("Generated URL:", publicUrl);
+      console.log("Generated URL:", publicUrl)
 
       const res = await fetch(
         `http://localhost:8000/api/users/${profile.id}/`,
@@ -97,65 +97,65 @@ export default function UserCompetition() {
             profile_picture: `${publicUrl}?t=${Date.now()}`,
           }),
         }
-      );
+      )
 
       if (!res.ok) {
-        const errorData = await res.json();
-        console.error("API Error:", errorData);
-        throw new Error(errorData.message || "Failed to update profile");
+        const errorData = await res.json()
+        console.error("API Error:", errorData)
+        throw new Error(errorData.message || "Failed to update profile")
       }
 
-      const data = await res.json();
-      setProfile(data);
+      const data = await res.json()
+      setProfile(data)
     } catch (error) {
-      console.error("Upload failed:", error);
-      alert(`Error: ${error.message || "Failed to upload image"}`);
+      console.error("Upload failed:", error)
+      alert(`Error: ${error.message || "Failed to upload image"}`)
     } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setUploading(false)
+      if (fileInputRef.current) fileInputRef.current.value = ""
     }
-  };
+  }
 
   const triggerFileInput = () => {
-    fileInputRef.current.click();
-  };
+    fileInputRef.current.click()
+  }
 
   useEffect(() => {
     const fetchTeams = async () => {
-      if (!profile) return;
+      if (!profile) return
 
       try {
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await supabase.auth.getSession()
         const accessToken =
-          session?.access_token || localStorage.getItem("access_token");
+          session?.access_token || localStorage.getItem("access_token")
 
         const res = await fetch("http://localhost:8000/api/my-teams/", {
           headers: {
             Authorization: `Bearer ${accessToken}`,
           },
-        });
+        })
 
         if (res.ok) {
-          const data = await res.json();
-          setTeams(data);
-          console.log("Fetched teams:", data);
+          const data = await res.json()
+          setTeams(data)
+          console.log("Fetched teams:", data)
         } else {
-          console.error("Failed to fetch Teams");
+          console.error("Failed to fetch Teams")
         }
       } catch (error) {
-        console.error("Error fetching Teams:", error);
+        console.error("Error fetching Teams:", error)
       }
-    };
+    }
 
-    fetchTeams();
-  }, [profile]);
+    fetchTeams()
+  }, [profile])
 
   if (!profile) {
     return (
       <div className="text-white text-center mt-10">Loading profile...</div>
-    );
+    )
   }
 
   return (
@@ -258,13 +258,17 @@ export default function UserCompetition() {
                         </span>
                         <div className="flex flex-col gap-1 text-white/90">
                           {team.members && team.members.length > 0 ? (
-                            team.members.map((m, i) => (
-                              <ul className="list-disc ml-5" key={i}>
-                                <li>
-                                  {m.first_name} {m.last_name}
-                                </li>
-                              </ul>
-                            ))
+                            team.members
+                              .filter(
+                                (m) => m.id !== team.leader?.id // filter out leader dari members
+                              )
+                              .map((m, i) => (
+                                <ul className="list-disc ml-5" key={i}>
+                                  <li>
+                                    {m.first_name} {m.last_name}
+                                  </li>
+                                </ul>
+                              ))
                           ) : (
                             <span>No members</span>
                           )}
@@ -290,5 +294,5 @@ export default function UserCompetition() {
         </div>
       </div>
     </div>
-  );
+  )
 }
