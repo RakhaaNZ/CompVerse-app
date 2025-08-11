@@ -135,8 +135,19 @@ export default function TeamDetailPage({ params }) {
     }
   };
 
-  if (loading) return <p>Loading team...</p>;
-  if (!team) return <p>Team not found.</p>;
+  if (loading)
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-purple-900 to-indigo-800 flex items-center justify-center">
+        <div className="text-white text-2xl">Loading team...</div>
+      </div>
+    );
+
+  if (!team)
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-purple-900 to-indigo-800 flex items-center justify-center">
+        <div className="text-white text-2xl">Team not found.</div>
+      </div>
+    );
 
   const currentUserId = getCurrentUserId();
   const isLeader = currentUserId && team.leader.id === parseInt(currentUserId);
@@ -149,65 +160,154 @@ export default function TeamDetailPage({ params }) {
   });
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">{team.name}</h1>
-      <p className="mb-2">Competition: {team.competition?.name || "N/A"}</p>
-      <p className="mb-6">
-        Leader: {team.leader.first_name} {team.leader.last_name}
-      </p>
+    <div className="min-h-screen bg-[#030210] text-white p-6">
+      {/* Header Section */}
+      <header className="mb-10 text-center">
+        <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-[#2541CD]">
+          Your Team
+        </h1>
+        <h2 className="text-2xl font-semibold">{team.name}</h2>
+        <div className="flex justify-center mt-4 space-x-4">
+          <span className="px-3 py-1 bg-purple-800/20 rounded-full text-sm">
+            {team.competition?.name || "N/A"}
+          </span>
+          <span className="px-3 py-1 bg-[#2541CD]/20 rounded-full text-sm">
+            Leader: {team.leader.first_name} {team.leader.last_name}
+          </span>
+        </div>
+      </header>
 
-      <div className="mb-8">
-        <h2 className="text-xl font-semibold mb-4">Members</h2>
-        <ul className="space-y-2">
+      {/* Members Section */}
+      <div className="max-w-3xl mx-auto bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg">
+        <h2 className="text-2xl font-bold mb-6 text-center border-b border-white/20 pb-3">
+          Team Members
+        </h2>
+
+        <ul className="space-y-3">
           {team.members.map((member) => (
             <li
               key={member.id}
-              className="flex justify-between items-center p-2 border rounded"
+              className="flex justify-between items-center p-4 bg-indigo-900/30 rounded-lg hover:bg-indigo-800/40 transition-all"
             >
-              <div>
-                {member.first_name} {member.last_name}
-                {member.id === team.leader.id && (
-                  <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
-                    Leader
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#2541CD] to-blue-500 flex items-center justify-center">
+                  <span className="font-bold">
+                    {member.first_name.charAt(0)}
+                    {member.last_name.charAt(0)}
                   </span>
-                )}
+                </div>
+                <div>
+                  <p className="font-medium">
+                    {member.first_name} {member.last_name}
+                  </p>
+                  <p className="text-sm text-white/70">{member.email}</p>
+                </div>
               </div>
+
               {isLeader && member.id !== team.leader.id && (
                 <button
                   onClick={() => handleRemoveMember(member.id)}
-                  className="text-red-500 hover:text-red-700"
+                  className="text-red-400 hover:text-red-300 transition-colors"
                 >
-                  Remove
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-6 w-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
+                  </svg>
                 </button>
+              )}
+
+              {member.id === team.leader.id && (
+                <span className="px-2 py-1 text-xs bg-yellow-400/20 text-yellow-300 rounded-full">
+                  Leader
+                </span>
               )}
             </li>
           ))}
         </ul>
       </div>
 
+      {/* Add Member Section */}
       {isLeader && (
-        <div className="mt-6 p-4 border rounded-lg bg-gray-50">
-          <h3 className="font-semibold mb-3">Add New Member</h3>
-          <div className="flex gap-2">
+        <div className="max-w-3xl mx-auto mt-8 bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-lg">
+          <h3 className="text-xl font-semibold mb-4">Add New Member</h3>
+          <div className="flex gap-3">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter member's email"
-              className="flex-1 p-2 border rounded"
+              className="flex-1 p-3 bg-white/5 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-400"
             />
             <button
               onClick={handleAddMember}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              className="bg-gradient-to-r from-[#2541CD] to-blue-500 px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity flex items-center"
             >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="h-5 w-5 mr-2"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
+                  clipRule="evenodd"
+                />
+              </svg>
               Add Member
             </button>
           </div>
         </div>
       )}
 
-      {error && <p className="mt-4 text-red-500">{error}</p>}
-      {success && <p className="mt-4 text-green-500">{success}</p>}
+      {/* Status Messages */}
+      <div className="max-w-3xl mx-auto mt-6">
+        {error && (
+          <div className="p-4 bg-red-400/20 text-red-100 rounded-lg flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="p-4 bg-green-400/20 text-green-100 rounded-lg flex items-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5 mr-2"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
+            </svg>
+            {success}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

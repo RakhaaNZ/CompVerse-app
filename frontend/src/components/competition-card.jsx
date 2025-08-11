@@ -227,7 +227,7 @@ export default function CompetitionCard({ competition }) {
                   isRegistrationClosed
                     ? "bg-gray-700 text-gray-400 ring-2 ring-gray-500 cursor-not-allowed"
                     : isRegistered
-                    ? "bg-green-600 text-white ring-2 ring-green-600"
+                    ? "bg-green-800/80 text-white ring-2 ring-green-600"
                     : "cursor-pointer bg-[#2541CD] text-white ring-2 ring-[#2541CD] hover:bg-[#1a36b5] hover:shadow-[0_0_15px_#2541CD] hover:scale-95"
                 }`}
                 disabled={isRegistrationClosed || checking || busy}
